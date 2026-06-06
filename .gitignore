@@ -1,0 +1,33 @@
+# --- Secrets & environnement (JAMAIS commités) ---
+.env
+.env.*
+!.env.example
+!.env.dev.example
+
+# --- Python / backend ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+*.sqlite3
+*.db
+
+# --- Node / frontend ---
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+test-results/
+
+# --- Docker / divers ---
+.DS_Store
+*.log
+caddy_data/
+caddy_config/
+postgres_data/
+redis_data/
