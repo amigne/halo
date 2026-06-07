@@ -44,7 +44,9 @@ class RefHit:
     """
 
     tag_prefix: str
-    """The tag prefix that triggered this hit (e.g. ``"#"``, ``"@"``)."""
+    """The module's tag prefix that triggered this hit (e.g. ``"LIST"``, ``"NOTE"``).
+
+    Tags use the form ``{PREFIX:ref_no}`` — e.g. ``{LIST:1}`` (see specs/01 §6)."""
 
     ref_no: int
     """Human-readable integer identifier, scoped to ``(context, type)``.
@@ -81,9 +83,10 @@ class Module(ABC):
     keys, and as the primary key in the ``modules`` registry table."""
 
     tag_prefix: str
-    """Single-character prefix for inline tags that reference objects of this
-    module (e.g. ``"#"``, ``"@"``).  The prefix is **reserved** per module —
-    the gate helpers enforce this exclusivity (step 7)."""
+    """Uppercase token prefix for inline tags that reference objects of this
+    module (e.g. ``"LIST"``, ``"NOTE"``), used in the ``{PREFIX:ref_no}`` grammar
+    (e.g. ``{LIST:1}`` — see specs/01 §6).  The prefix is **reserved** per module
+    — the gate helpers enforce this exclusivity (step 7)."""
 
     introduced_in: str
     """Semver string indicating the Halo version that first shipped this module

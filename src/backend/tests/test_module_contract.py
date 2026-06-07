@@ -16,7 +16,7 @@ class PartialModule(Module):
     """A module that forgets to implement ``models()`` — must fail."""
 
     key = "partial"
-    tag_prefix = "@"
+    tag_prefix = "PARTIAL"
     introduced_in = "0.0.1"
     router = None  # type: ignore[assignment]
 
@@ -53,7 +53,7 @@ def test_dummy_module_has_required_attributes() -> None:
     """The dummy module exposes every class-level attr required by the contract."""
     mod = DummyModule()
     assert mod.key == "dummy"
-    assert mod.tag_prefix == "#"
+    assert mod.tag_prefix == "DUMMY"
     assert mod.introduced_in == "0.0.1"
     assert mod.router is not None
 
@@ -80,7 +80,7 @@ async def test_dummy_module_resolve_refs() -> None:
     assert isinstance(hits, dict)
     assert set(hits.keys()) == {1, 2, 3}
     assert all(isinstance(h, RefHit) for h in hits.values())
-    assert hits[1].tag_prefix == "#"
+    assert hits[1].tag_prefix == "DUMMY"
     assert hits[1].ref_no == 1
     assert hits[1].title == "Dummy #1"
 
@@ -102,7 +102,7 @@ def test_ref_hit_is_frozen() -> None:
     """RefHit is a frozen dataclass — mutation must raise FrozenInstanceError."""
     import uuid as _uuid
 
-    hit = RefHit(tag_prefix="#", ref_no=1, uuid=_uuid.uuid7(), title="Test")
+    hit = RefHit(tag_prefix="LIST", ref_no=1, uuid=_uuid.uuid7(), title="Test")
     with pytest.raises(AttributeError):  # FrozenInstanceError inherits AttributeError
         hit.title = "Changed"  # type: ignore[misc]
 

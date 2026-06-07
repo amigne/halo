@@ -15,7 +15,7 @@ class DummyModule(Module):
     """A minimal, fully-conforming module used in contract validation tests."""
 
     key = "dummy"
-    tag_prefix = "#"
+    tag_prefix = "DUMMY"
     introduced_in = "0.0.1"
     router = APIRouter()
 
@@ -30,7 +30,7 @@ class DummyModule(Module):
     ) -> dict[int, RefHit]:
         return {
             n: RefHit(
-                tag_prefix="#",
+                tag_prefix="DUMMY",
                 ref_no=n,
                 uuid=uuid.uuid7(),
                 title=f"Dummy #{n}",
@@ -41,7 +41,7 @@ class DummyModule(Module):
     async def search_titles(self, query: str, ctx: ContextKey) -> list[RefHit]:
         return [
             RefHit(
-                tag_prefix="#",
+                tag_prefix="DUMMY",
                 ref_no=42,
                 uuid=uuid.uuid7(),
                 title=f"Dummy match for '{query}'",
