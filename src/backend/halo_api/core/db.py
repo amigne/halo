@@ -66,7 +66,6 @@ def _set_sqlite_pragmas(dbapi_connection: object, _connection_record: object) ->
     sqlite_conn.execute("PRAGMA busy_timeout=5000")
 
 
-event.listen(engine.pool, "connect", _set_sqlite_pragmas)
 event.listen(engine.sync_engine, "connect", _set_sqlite_pragmas)
 
 # ── Session ──────────────────────────────────────────────────────────────────
