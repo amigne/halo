@@ -21,7 +21,7 @@ ALEMBIC_INI = BACKEND_DIR / "alembic.ini"
 
 # ── DB URLs ──────────────────────────────────────────────────────────────────
 
-SQLITE_URL = "sqlite+aiosqlite:///./test_halo.db"
+SQLITE_URL = f"sqlite+aiosqlite:///{BACKEND_DIR}/test_halo.db"
 PG_URL = os.environ.get(
     "TEST_PG_URL",
     "postgresql+psycopg://postgres:halotest@localhost:5432/halotest",
