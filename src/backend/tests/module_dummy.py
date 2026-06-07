@@ -4,6 +4,8 @@ This module is deliberately minimal — it exists only to prove that the ABC
 is enforceable and that the registry can manage it.
 """
 
+import uuid
+
 from fastapi import APIRouter
 
 from halo_api.modules.base import ContextKey, Module, RefHit, RefType
@@ -30,7 +32,7 @@ class DummyModule(Module):
             n: RefHit(
                 tag_prefix="#",
                 ref_no=n,
-                uuid=__import__("uuid").uuid7(),
+                uuid=uuid.uuid7(),
                 title=f"Dummy #{n}",
             )
             for n in ref_nos
@@ -41,7 +43,7 @@ class DummyModule(Module):
             RefHit(
                 tag_prefix="#",
                 ref_no=42,
-                uuid=__import__("uuid").uuid7(),
+                uuid=uuid.uuid7(),
                 title=f"Dummy match for '{query}'",
             )
         ]

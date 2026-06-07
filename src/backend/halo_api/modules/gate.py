@@ -7,33 +7,39 @@ applied** to any real module — wiring happens in step 7.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from fastapi import Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from halo_api.core.db import get_session
-from halo_api.modules.registry import is_enabled
+from halo_api.modules.registry import get_module, is_enabled
 
 # ── API route gate ─────────────────────────────────────────────────────────────
 
 
-async def require_module_enabled(
-    module_key: str,
-    request: Request,
-    session: AsyncSession = Depends(get_session),  # noqa: B008
-) -> None:
-    """FastAPI dependency that raises 404 when *module_key* is disabled.
+def require_module_enabled(module_key: str) -> Callable[..., object]:
+    """Return a FastAPI dependency that raises 404 when *module_key* is disabled.
 
     Usage (step 7+)::
 
         router = APIRouter(dependencies=[Depends(require_module_enabled("lists"))])
 
-    When the module is disabled the endpoint behaves as if it does not exist
-    (404), not as if it is forbidden (403) — this avoids leaking information
-    about installed-but-inactive features.
+    The outer function is a **synchronous factory** that captures *module_key*
+    and returns an async FastAPI dependency.  When the module is disabled the
+    endpoint behaves as if it does not exist (404), not as if it is forbidden
+    (403) — this avoids leaking information about installed-but-inactive features.
     """
-    enabled = await is_enabled(session, module_key)
-    if not enabled:
-        raise HTTPException(status_code=404, detail="Not found")
+
+    async def _check(
+        request: Request,
+        session: AsyncSession = Depends(get_session),  # noqa: B008
+    ) -> None:
+        enabled = await is_enabled(session, module_key)
+        if not enabled:
+            raise HTTPException(status_code=404, detail="Not found")
+
+    return _check
 
 
 # ── Menu gate ──────────────────────────────────────────────────────────────────
@@ -70,7 +76,6 @@ async def active_tag_prefixes(session: AsyncSession) -> set[str]:
     from sqlalchemy import select
 
     from halo_api.modules.models import Module as ModuleRow
-    from halo_api.modules.registry import _modules
 
     result = await session.execute(
         select(ModuleRow.key).where(ModuleRow.enabled == True)  # noqa: E712
@@ -79,7 +84,7 @@ async def active_tag_prefixes(session: AsyncSession) -> set[str]:
 
     prefixes: set[str] = set()
     for key in enabled_keys:
-        mod = _modules.get(key)
+        mod = get_module(key)
         if mod is not None:
             prefixes.add(mod.tag_prefix)
     return prefixes
