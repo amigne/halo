@@ -38,9 +38,9 @@ def upgrade() -> None:
         ),
         sa.Column(
             "enabled_by",
-            sa.String(length=255),
+            sa.Uuid(),
             nullable=True,
-            comment="Identifier of the admin who enabled it",
+            comment="FK → users.id — admin who enabled the module (future constraint)",
         ),
         sa.PrimaryKeyConstraint("key"),
     )
