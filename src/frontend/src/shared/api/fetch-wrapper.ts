@@ -7,8 +7,8 @@
 
 import type { paths } from "./client";
 
-// Chemins générés par openapi-typescript déjà absolus (ex. /api/v1/health).
-// En dev le proxy Vite (/api→backend) et en prod le reverse proxy Caddy acheminent /api.
+// Generated paths are already absolute (e.g. /api/v1/health).
+// In dev the Vite proxy (/api→backend) and in prod the Caddy reverse proxy route /api.
 const BASE_URL = "";
 
 type SuccessResponse<

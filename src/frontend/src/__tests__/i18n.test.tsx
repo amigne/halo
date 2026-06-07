@@ -71,12 +71,17 @@ describe("i18n", () => {
     expect(localStorageMock.setItem).toHaveBeenCalledWith("halo-lang", "fr");
   });
 
-  it("reads stored language on initialization", () => {
-    // Simulate stored preference — the listener was set after init,
-    // but the initial read used getItem at module load time.
-    // We verify the mechanism by checking that getItem is available.
-    expect(localStorageMock.getItem).toBeDefined();
-    // The module already read halo-lang at import time; the initial
-    // value matched what was in localStorage when the module loaded.
+  it("reads stored language on initialization", async () => {
+    // Simulate a stored preference before module initialization.
+    // We use vi.resetModules so the i18n module re-evaluates
+    // localStorage.getItem("halo-lang") on re-import.
+    localStorageMock.setItem("halo-lang", "en");
+
+    vi.resetModules();
+    const { i18next: fresh } = await import("@/shared/i18n");
+    expect(fresh.language).toBe("en");
+
+    // Restore the original module for subsequent tests
+    vi.resetModules();
   });
 });

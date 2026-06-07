@@ -4,6 +4,7 @@ import { apiGet } from "@/shared/api/fetch-wrapper";
 describe("fetch-wrapper", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("calls the exact path without double-prefixing /api/v1", async () => {
