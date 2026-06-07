@@ -1,0 +1,31 @@
+# Halo Backend — dev image with hot-reload support (T-151)
+#
+# Build:  docker build -f Dockerfile.dev -t halo-backend-dev .
+# Run:    docker run -p 8000:8000 --env-file .env -v .:/app halo-backend-dev
+
+FROM python:3.14-slim
+
+WORKDIR /app
+
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Install system deps needed for python packages (psycopg)
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency manifests
+COPY pyproject.toml uv.lock .python-version ./
+
+# Install all dependencies (including dev) into a venv
+RUN uv sync --frozen --all-extras
+
+# Copy application source (overridden by volume mount in dev compose)
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uv", "run", "uvicorn", "halo_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
