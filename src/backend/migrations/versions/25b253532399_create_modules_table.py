@@ -27,7 +27,7 @@ def upgrade() -> None:
             "key",
             sa.String(length=64),
             nullable=False,
-            comment="Unique module key (e.g. 'lists')",
+            comment="Stable module slug (e.g. 'lists')",
         ),
         sa.Column("enabled", sa.Boolean(), nullable=False),
         sa.Column(
