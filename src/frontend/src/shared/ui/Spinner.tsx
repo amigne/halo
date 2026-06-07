@@ -1,6 +1,7 @@
 interface SpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
+  label?: string;
 }
 
 const sizeMap: Record<string, string> = {
@@ -9,11 +10,11 @@ const sizeMap: Record<string, string> = {
   lg: "h-12 w-12 border-4",
 };
 
-export function Spinner({ size = "md", className = "" }: SpinnerProps) {
+export function Spinner({ size = "md", className = "", label }: SpinnerProps) {
   return (
     <div
       role="status"
-      aria-label="Loading"
+      aria-label={label}
       className={`animate-spin rounded-full border-border border-t-primary-600 ${sizeMap[size]} ${className}`}
     />
   );
