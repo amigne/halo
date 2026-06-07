@@ -59,7 +59,7 @@ def _redis_available() -> bool:
         return False
 
 
-def _cleanup_db_file(url: str) -> None:
+def cleanup_db_file(url: str) -> None:
     """Remove an SQLite database file."""
     if url.startswith("sqlite"):
         path = url.removeprefix("sqlite+aiosqlite:///").lstrip("/")
@@ -115,7 +115,7 @@ async def client() -> AsyncGenerator[AsyncClient]:
     # Clean up the default SQLite database created during the test
     from halo_api.core.config import settings
 
-    _cleanup_db_file(settings.database_url)
+    cleanup_db_file(settings.database_url)
 
 
 @pytest.fixture
