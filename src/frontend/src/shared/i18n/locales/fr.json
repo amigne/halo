@@ -1,0 +1,27 @@
+{
+  "app": {
+    "title": "Halo",
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "notFound": "Page introuvable",
+    "notFoundHint": "La page que vous cherchez n'existe pas.",
+    "goHome": "Retour à l'accueil"
+  },
+  "theme": {
+    "light": "Jour",
+    "dark": "Nuit",
+    "system": "Système"
+  },
+  "language": {
+    "fr": "Français",
+    "en": "English",
+    "switchTo": "Changer la langue"
+  },
+  "health": {
+    "title": "État du système",
+    "status": "Statut",
+    "ok": "Opérationnel",
+    "error": "Erreur",
+    "checking": "Vérification…"
+  }
+}

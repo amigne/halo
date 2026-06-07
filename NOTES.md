@@ -21,3 +21,13 @@ Toutes les tables d'enregistrements utilisent `UUIDPKMixin` (défini dans
 Exception documentée (specs/03 §5) : la table `modules` utilise une **clé
 naturelle** (`key`, slug technique) au lieu d'un UUIDv7 — c'est un registre de
 configuration, pas un enregistrement utilisateur.
+
+## `.npmrc legacy-peer-deps=true` (étape 1d-bis)
+
+`openapi-typescript@7.13.0` déclare un peer-dependency `typescript@"^5.x"` mais
+le projet utilise TypeScript `~6.0.0` (spécifié par specs/03 §2). Le flag
+`legacy-peer-deps=true` est nécessaire jusqu'à ce que la spec autorise TS 5.x ou
+qu'`openapi-typescript` publie une version compatible TS 6.0.
+
+Le `npm ci` échoue sans ce fichier (`ERESOLVE: peer typescript@"^5.x"`).
+
