@@ -1,7 +1,8 @@
 import { type ReactNode } from "react";
 import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, beforeEach, vi } from "vitest";
-import { ThemeProvider, useTheme } from "@/shared/theme/store";
+import { ThemeProvider } from "@/shared/theme/store";
+import { useTheme } from "@/shared/theme/use-theme";
 
 const localStorageMock = (() => {
   let store: Record<string, string> = {};

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/ui/Button";
-import { type Theme, useTheme } from "@/shared/theme/store";
+import { type Theme, useTheme } from "@/shared/theme/use-theme";
 
 const THEMES: { key: Theme; labelKey: string }[] = [
   { key: "light", labelKey: "theme.light" },
