@@ -20,11 +20,13 @@ class Settings(BaseSettings):
     # --- Environment ---
     app_env: str = "development"
 
-    # --- Database (populated in étape 1b) ---
-    database_url: str = ""
+    # --- Database ---
+    # Default: SQLite in the current directory (dev).  Set to
+    # postgresql+psycopg://user:pass@host:5432/dbname for prod (T-141).
+    database_url: str = "sqlite+aiosqlite:///./halo.db"
 
-    # --- Redis (populated in étape 1b) ---
-    redis_url: str = ""
+    # --- Redis ---
+    redis_url: str = "redis://localhost:6379/0"
 
 
 settings = Settings()
