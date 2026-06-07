@@ -1,0 +1,35 @@
+# Halo — Caddy reverse proxy (T-150)
+#
+# Routes:
+#   /api/*  → backend:8000
+#   /*      → frontend:8080 (SPA)
+
+:80 {
+    # Backend API
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            header_up Host {host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Health endpoints — direct to backend
+    handle /health {
+        rewrite * /api/v1/health
+        reverse_proxy backend:8000
+    }
+
+    # Frontend SPA (everything else)
+    handle {
+        reverse_proxy frontend:8080 {
+            header_up Host {host}
+        }
+    }
+
+    # Logging
+    log {
+        output stdout
+        format json
+    }
+}

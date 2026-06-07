@@ -31,3 +31,24 @@ qu'`openapi-typescript` publie une version compatible TS 6.0.
 
 Le `npm ci` échoue sans ce fichier (`ERESOLVE: peer typescript@"^5.x"`).
 
+## Healthchecks Docker : `127.0.0.1` au lieu de `localhost` (étape 1e)
+
+Les conteneurs Alpine (node, nginx, Caddy) résolvent `localhost` en `::1` (IPv6)
+mais Vite, Nginx et certains services n'écoutent qu'en IPv4. Les healthchecks
+`wget` utilisent donc `127.0.0.1` pour éviter les `Connection refused`.
+
+Le backend Python utilise `urllib.request.urlopen` qui gère correctement IPv6.
+
+## Volume Postgres 18+ : `/var/lib/postgresql` (étape 1e)
+
+À partir de Postgres 18, l'image Docker attend un montage sur
+`/var/lib/postgresql` (répertoire parent) au lieu de `/var/lib/postgresql/data`.
+Le conteneur crée lui-même un sous-répertoire par version majeure, permettant
+les mises à niveau `pg_upgrade --link`.
+
+## `uv sync --all-extras` (étape 1e)
+
+`uv 0.11.18` n'installe pas les `[project.optional-dependencies]` par défaut.
+Le flag `--dev` ne fonctionne pas pour les optional-deps (il concerne les
+`[dependency-groups]` PEP 735). Il faut utiliser `--all-extras` ou `--extra dev`
+pour inclure pytest, ruff, mypy, httpx dans l'environnement.

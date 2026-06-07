@@ -1,0 +1,20 @@
+# Halo Frontend — dev image with Vite HMR (T-151)
+#
+# Build:  docker build -f Dockerfile.dev -t halo-frontend-dev .
+# Run:    docker run -p 5173:5173 -v ./src:/app/src halo-frontend-dev
+
+FROM node:24-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci
+
+# Copy config files (source mounted as volume in dev compose for HMR)
+COPY tsconfig.json vite.config.ts eslint.config.js index.html ./
+COPY src/ src/
+
+EXPOSE 5173
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

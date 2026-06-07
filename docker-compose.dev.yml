@@ -1,0 +1,138 @@
+# Halo — Docker Compose dev (T-151)
+#
+# Usage:
+#   cp .env.dev.example .env.dev
+#   docker compose -f docker-compose.dev.yml up -d          # SQLite (default)
+#   docker compose -f docker-compose.dev.yml --profile postgres up -d  # Postgres 18
+#
+# Services:
+#   backend   — Uvicorn hot-reload on :8000
+#   frontend  — Vite HMR on :5173
+#   redis     — Redis 8.8 on :6379
+#   mailpit   — SMTP sandbox on :1025, web UI on :8025
+#   db        — Postgres 18 on :5432 (profile: postgres)
+
+services:
+  # ── Backend (Uvicorn hot-reload) ───────────────────────────────────────────
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile.dev
+    image: halo-backend-dev:latest
+    container_name: halo-backend-dev
+    volumes:
+      - ./src/backend/halo_api:/app/halo_api:ro
+      - ./src/backend/tests:/app/tests:ro
+      - ./src/backend/migrations:/app/migrations:ro
+      - ./src/backend/alembic.ini:/app/alembic.ini:ro
+      - ./src/backend/pyproject.toml:/app/pyproject.toml:ro
+      - halo_dev_data:/app/data
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.dev
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+        required: false
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 15s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ── Frontend (Vite HMR) ────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile.dev
+    image: halo-frontend-dev:latest
+    container_name: halo-frontend-dev
+    volumes:
+      - ./src/frontend/src:/app/src:ro
+      - ./src/frontend/index.html:/app/index.html:ro
+      - ./src/frontend/vite.config.ts:/app/vite.config.ts:ro
+      - ./src/frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./src/frontend/eslint.config.js:/app/eslint.config.js:ro
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_TARGET=http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5173/"]
+      interval: 15s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ── Redis 8.8 ──────────────────────────────────────────────────────────────
+  redis:
+    image: redis:8.8.0-alpine
+    container_name: halo-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - halo_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── Mailpit (SMTP sandbox) ─────────────────────────────────────────────────
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: halo-mailpit-dev
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      - MP_SMTP_AUTH_ACCEPT_ANY=1
+      - MP_SMTP_AUTH_ALLOW_INSECURE=1
+    volumes:
+      - halo_mailpit_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8025/"]
+      interval: 15s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ── Postgres 18 (activable via --profile postgres) ─────────────────────────
+  db:
+    image: postgres:18-alpine
+    container_name: halo-postgres-dev
+    profiles:
+      - postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=halotest
+      - POSTGRES_DB=halodev
+    volumes:
+      - halo_pg_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d halodev"]
+      interval: 10s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  halo_dev_data:
+  halo_redis_data:
+  halo_mailpit_data:
+  halo_pg_data:
