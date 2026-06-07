@@ -17,5 +17,9 @@ i18next.use(initReactI18next).init({
   },
 });
 
+// Persist language choice on every change (covers all call sites) — U-100/U-104
+i18next.on("languageChanged", (lng) => {
+  localStorage.setItem("halo-lang", lng);
+});
+
 export { i18next };
-export { default as i18n } from "i18next";
