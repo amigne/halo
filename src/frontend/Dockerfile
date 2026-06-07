@@ -12,18 +12,15 @@ COPY src/ src/
 RUN npm run build
 
 # ── Stage 2: Serve ───────────────────────────────────────────────────────────
-FROM nginx:alpine
-
-# Non-root user (T-153)
-RUN addgroup -S halo && adduser -S halo -G halo
+# nginx-unprivileged runs as non-root by default, listens on 8080 (T-153)
+FROM nginxinc/nginx-unprivileged:alpine
 
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Nginx config: serve SPA (all routes → index.html) + proxy /api to backend
+# Nginx config: serve SPA (all routes → index.html).
+# /api routing is handled by the Caddy reverse proxy (specs/03 §1), not here.
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
-
-USER halo
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
