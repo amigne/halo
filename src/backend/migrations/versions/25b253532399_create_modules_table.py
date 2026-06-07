@@ -27,7 +27,7 @@ def upgrade() -> None:
             "key",
             sa.String(length=64),
             nullable=False,
-            comment="Unique module key (e.g. 'lists')",
+            comment="Stable module slug (e.g. 'lists')",
         ),
         sa.Column("enabled", sa.Boolean(), nullable=False),
         sa.Column(
@@ -38,9 +38,9 @@ def upgrade() -> None:
         ),
         sa.Column(
             "enabled_by",
-            sa.String(length=255),
+            sa.Uuid(),
             nullable=True,
-            comment="Identifier of the admin who enabled it",
+            comment="FK → users.id — admin who enabled the module (future constraint)",
         ),
         sa.PrimaryKeyConstraint("key"),
     )
