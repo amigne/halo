@@ -7,7 +7,9 @@
 
 import type { paths } from "./client";
 
-const BASE_URL = "/api/v1";
+// Chemins générés par openapi-typescript déjà absolus (ex. /api/v1/health).
+// En dev le proxy Vite (/api→backend) et en prod le reverse proxy Caddy acheminent /api.
+const BASE_URL = "";
 
 type SuccessResponse<
   P extends keyof paths,
