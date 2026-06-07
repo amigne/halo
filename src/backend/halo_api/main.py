@@ -43,9 +43,7 @@ async def ready() -> JSONResponse:
     redis_ok = await check_redis()
 
     if db_ok and redis_ok:
-        return JSONResponse(
-            content={"status": "ok", "database": True, "redis": True}
-        )
+        return JSONResponse(content={"status": "ok", "database": True, "redis": True})
     return JSONResponse(
         content={"status": "error", "database": db_ok, "redis": redis_ok},
         status_code=503,

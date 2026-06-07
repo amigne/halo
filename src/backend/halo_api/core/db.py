@@ -29,9 +29,7 @@ engine = create_async_engine(
 # ── SQLite pragmas (T-144) ───────────────────────────────────────────────────
 
 
-def _set_sqlite_pragmas(
-    dbapi_connection: object, _connection_record: object
-) -> None:
+def _set_sqlite_pragmas(dbapi_connection: object, _connection_record: object) -> None:
     """Set SQLite pragmas on every new connection (T-144).
 
     Works for both:

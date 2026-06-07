@@ -67,9 +67,7 @@ def cleanup_db_file(url: str) -> None:
             os.remove(path)
 
 
-def run_alembic(
-    cmd: list[str], db_url: str
-) -> subprocess.CompletedProcess[str]:
+def run_alembic(cmd: list[str], db_url: str) -> subprocess.CompletedProcess[str]:
     """Run Alembic in a subprocess (avoids event-loop conflicts)."""
     env = os.environ.copy()
     env["DATABASE_URL"] = db_url

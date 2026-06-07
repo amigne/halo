@@ -20,9 +20,7 @@ class Module(Base):
     key: Mapped[str] = mapped_column(
         String(64), primary_key=True, comment="Unique module key (e.g. 'lists')"
     )
-    enabled: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False
-    )
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     enabled_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         default=None,
