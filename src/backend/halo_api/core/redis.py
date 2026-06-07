@@ -21,6 +21,14 @@ async def get_redis() -> Redis:
     return _redis
 
 
+async def close_redis() -> None:
+    """Close the shared Redis client and reset the global reference."""
+    global _redis
+    if _redis is not None:
+        await _redis.aclose()
+        _redis = None
+
+
 async def check_redis() -> bool:
     """Ping Redis — returns ``True`` when reachable."""
     try:

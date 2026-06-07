@@ -8,15 +8,14 @@ from fastapi.routing import APIRouter
 from starlette.responses import JSONResponse
 
 from halo_api.core.db import check_db, engine
-from halo_api.core.redis import check_redis
+from halo_api.core.redis import check_redis, close_redis
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    """Application lifespan — init DB/Redis, clean up on shutdown."""
-    # Touch engine so the pool is ready; SQLite pragmas are applied via
-    # the connect event listeners registered in core.db.
+    """Application lifespan — clean up resources on shutdown."""
     yield
+    await close_redis()
     await engine.dispose()
 
 
