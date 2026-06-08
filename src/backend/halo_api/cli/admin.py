@@ -6,6 +6,7 @@ Usage:
 """
 
 import asyncio
+import getpass
 import sys
 
 from sqlalchemy import select
@@ -34,13 +35,13 @@ def _get_non_empty(prompt: str) -> str:
 
 
 def _get_password() -> str:
-    """Prompt for password with confirmation."""
+    """Prompt for password with confirmation (masked, T-075)."""
     while True:
-        pw = input("Password: ").strip()
+        pw = getpass.getpass("Password: ").strip()
         if len(pw) < 8:
             print("Password must be at least 8 characters.")
             continue
-        confirm = input("Confirm password: ").strip()
+        confirm = getpass.getpass("Confirm password: ").strip()
         if pw == confirm:
             return pw
         print("Passwords do not match.")

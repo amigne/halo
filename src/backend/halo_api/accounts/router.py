@@ -35,6 +35,7 @@ from halo_api.accounts.session import (
     set_session_cookie,
 )
 from halo_api.core.config import settings
+from halo_api.core.csrf import generate_csrf_token, set_csrf_cookie
 from halo_api.core.db import get_session
 from halo_api.core.rate_limit import rate_limit
 
@@ -42,13 +43,49 @@ logger = logging.getLogger("halo.auth")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Pre-computed dummy hash for timing equalisation (T-083).
+# When a login attempt targets an unknown email, we still run Argon2id
+# verification against this constant so the response time is indistinguishable
+# from a valid-email-but-wrong-password scenario.
+_DUMMY_HASH: str = hash_password("__halo_dummy_for_timing_equalisation__")
+
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def _ensure_utc(dt: datetime) -> datetime:
+    """Return *dt* as a timezone-aware UTC datetime.
+
+    SQLite stores datetimes without timezone info; PostgreSQL stores them
+    with.  This helper normalises both cases so comparisons with
+    ``datetime.now(UTC)`` always work.
+    """
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC)
+    return dt
 
 
 async def _email_exists(db: AsyncSession, email: str) -> bool:
     """Check whether *email* (lowercased) is already registered."""
     result = await db.execute(select(User).where(User.email == email.lower()))
     return result.scalar_one_or_none() is not None
+
+
+# ── CSRF token endpoint ──────────────────────────────────────────────────────
+
+
+@router.get("/csrf")
+async def csrf_token(
+    response: Response,
+) -> dict[str, str]:
+    """Emit a ``csrf_token`` cookie and return the token value.
+
+    The frontend calls this on app load (and before any POST) to obtain a
+    CSRF token.  The cookie is ``HttpOnly=False`` so JavaScript can read it
+    and send it back as ``X-CSRF-Token`` on mutating requests.
+    """
+    token = generate_csrf_token()
+    set_csrf_cookie(response, token, secure=settings.session_secure_cookie)
+    return {"token": token}
 
 
 # ── Register (F-001, F-002) ──────────────────────────────────────────────────
@@ -138,16 +175,8 @@ async def register(
 # ── Verify email (F-003) ─────────────────────────────────────────────────────
 
 
-@router.get("/verify-email", response_model=MessageResponse)
-async def verify_email(
-    token: str,
-    db: AsyncSession = Depends(get_session),
-) -> MessageResponse:
-    """Verify an email address using a CSPRNG token (T-081, T-082).
-
-    The token is single-use and has a limited lifetime.
-    """
-    # Look up the token by hash
+async def _lookup_verify_token(token: str, db: AsyncSession) -> EmailToken | None:
+    """Return the EmailToken if *token* is valid (exists, not expired, unused)."""
     from halo_api.accounts.security import hash_token
 
     token_hash_val = hash_token(token)
@@ -158,19 +187,48 @@ async def verify_email(
         )
     )
     email_token = result.scalar_one_or_none()
+    if email_token is None:
+        return None
+    if _ensure_utc(email_token.expires_at) < datetime.now(UTC):
+        return None
+    if email_token.used_at is not None:
+        return None
+    return email_token
 
+
+@router.get("/verify-email", response_model=MessageResponse)
+async def verify_email_get(
+    token: str,
+    db: AsyncSession = Depends(get_session),
+) -> MessageResponse:
+    """Inspect a verification token (GET — does NOT consume it).
+
+    Email scanners / link prefetchers cannot burn the token this way.
+    The frontend sends a POST to actually confirm verification.
+    """
+    email_token = await _lookup_verify_token(token, db)
+    if email_token is None:
+        return MessageResponse(message="Invalid or expired verification link.")
+    return MessageResponse(
+        message="Verification link is valid. Click confirm to verify your email."
+    )
+
+
+@router.post("/verify-email", response_model=MessageResponse)
+async def verify_email_post(
+    token: str,
+    db: AsyncSession = Depends(get_session),
+) -> MessageResponse:
+    """Confirm email verification (POST — consumes the token).
+
+    Marks the token as used and sets ``is_verified=True`` on the user.
+    The token is single-use and has a limited lifetime (T-081, T-082).
+    """
+    email_token = await _lookup_verify_token(token, db)
     if email_token is None:
         return MessageResponse(message="Invalid or expired verification link.")
 
-    # Check expiry
-    if email_token.expires_at < datetime.now(UTC):
-        return MessageResponse(message="Invalid or expired verification link.")
-
-    # Check single-use
-    if email_token.used_at is not None:
-        return MessageResponse(message="Invalid or expired verification link.")
-
-    # Mark as used
+    # Mark as used (single-use)
     email_token.used_at = datetime.now(UTC)
 
     # Verify the user
@@ -219,8 +277,13 @@ async def login(
     result = await db.execute(select(User).where(User.email == email_lower))
     user = result.scalar_one_or_none()
 
-    if user is None or not verify_password(body.password, user.password_hash):
-        # Uniform error — no indication whether email exists
+    if user is None:
+        # Anti-enumeration timing (T-083): run Argon2id against a dummy hash
+        # so unknown-email and wrong-password have indistinguishable latency.
+        verify_password(body.password, _DUMMY_HASH)
+        raise _invalid_credentials()
+
+    if not verify_password(body.password, user.password_hash):
         raise _invalid_credentials()
 
     # Create session
@@ -228,6 +291,10 @@ async def login(
     ua = request.headers.get("User-Agent")
     token = await create_session(db, user, ip=ip, ua=ua)
     set_session_cookie(response, token)
+
+    # Also emit a CSRF token cookie so the frontend has one after login
+    csrf = generate_csrf_token()
+    set_csrf_cookie(response, csrf, secure=settings.session_secure_cookie)
 
     logger.info("User logged in: %s", user.email)
     return UserResponse.model_validate(user)
@@ -364,7 +431,7 @@ async def reset_password(
     if email_token is None:
         return MessageResponse(message="Invalid or expired reset link.")
 
-    if email_token.expires_at < datetime.now(UTC):
+    if _ensure_utc(email_token.expires_at) < datetime.now(UTC):
         return MessageResponse(message="Invalid or expired reset link.")
 
     if email_token.used_at is not None:

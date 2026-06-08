@@ -2,7 +2,7 @@
  * Thin typed fetch wrapper around the generated OpenAPI client (T-136).
  *
  * All response shapes are derived from the backend's live OpenAPI spec
- * via `openapi-typescript` — nothing is hand-coded.
+ * via ``openapi-typescript`` — nothing is hand-coded.
  */
 
 import type { paths } from "./client";

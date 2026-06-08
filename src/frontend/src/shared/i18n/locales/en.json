@@ -43,6 +43,7 @@
     "verifying": "Verifying your email…",
     "verified": "Email verified!",
     "verifiedMessage": "Your email address has been confirmed. You can now log in.",
+    "confirmVerification": "Confirm my email",
     "invalidLink": "Invalid or expired link.",
     "checkEmail": "Check your email",
     "checkEmailMessage": "If this address is registered, a verification email has been sent.",

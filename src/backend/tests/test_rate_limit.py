@@ -11,6 +11,16 @@ async def test_check_rate_limit_allows_and_blocks() -> None:
     if not _redis_available():
         pytest.skip("Redis not available")
 
+    # Ensure a fresh Redis connection (previous tests may have closed it).
+    import contextlib
+
+    import halo_api.core.redis as redis_mod
+
+    if redis_mod._redis is not None:
+        with contextlib.suppress(Exception):
+            await redis_mod._redis.aclose()
+        redis_mod._redis = None
+
     import uuid
 
     from halo_api.core.rate_limit import _check_rate_limit

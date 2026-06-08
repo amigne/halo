@@ -20,9 +20,19 @@ export function LoginPage() {
     setLoading(true);
 
     try {
+      // Ensure CSRF cookie is set before POST (T-071).
+      await fetch("/api/v1/auth/csrf");
+      const csrfToken =
+        document.cookie
+          .match(/(?:^|; )csrf_token=([^;]*)/)
+          ?.at(1) ?? "";
+
       const resp = await fetch("/api/v1/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
         body: JSON.stringify({ email, password }),
       });
 

@@ -167,12 +167,18 @@ async def enqueue_email_job(job: dict[str, object]) -> None:
 
     *job* must be a dict with keys: ``kind``, ``email``, ``first_name``,
     ``locale``, and ``token``.
-    """
-    from halo_api.core.redis import get_redis
 
-    redis = await get_redis()
-    payload = json.dumps(job)
-    await redis.lpush("halo:email_queue", payload)
+    Fails **open** — if Redis is unreachable the job is silently dropped
+    and a warning is logged (does not break the caller).
+    """
+    try:
+        from halo_api.core.redis import get_redis
+
+        redis = await get_redis()
+        payload = json.dumps(job)
+        await redis.lpush("halo:email_queue", payload)
+    except Exception:
+        logger.warning("Redis unavailable — email job dropped for %s", job.get("email"))
 
 
 async def process_email_jobs() -> None:

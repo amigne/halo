@@ -20,9 +20,15 @@ export function RegisterPage() {
     setLoading(true);
 
     try {
+      await fetch("/api/v1/auth/csrf");
+      const csrfToken =
+        document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.at(1) ?? "";
       const resp = await fetch("/api/v1/auth/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        },
         body: JSON.stringify({
           email,
           password,

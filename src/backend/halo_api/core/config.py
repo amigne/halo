@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     rate_limit_register_per_hour: int = 3
     rate_limit_reset_per_hour: int = 3
 
+    # Comma-separated list of trusted reverse proxy IPs.
+    # When set, the client IP for rate limiting is derived from the first
+    # entry in X-Forwarded-For rather than from request.client.host.
+    # Leave empty when not behind a reverse proxy.
+    trusted_proxies: str = ""
+
     # --- App URL (for email links) ---
     app_url: str = "http://localhost:5173"
 

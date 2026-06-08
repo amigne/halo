@@ -99,6 +99,77 @@ def db_url(request: pytest.FixtureRequest) -> str:
     return url
 
 
+@pytest.fixture(params=DB_PARAMS, ids=[f"http-{i}" for i in DB_IDS])
+async def http_client(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncGenerator[AsyncClient]:
+    """Async HTTP client parametrised across DB engines.
+
+    The FastAPI app's engine and session factory are temporarily swapped
+    to point to the parametrised test database.  Rate limiting thresholds
+    are set very high so HTTP auth tests are not throttled.
+    """
+    from sqlalchemy.ext.asyncio import (
+        AsyncSession as SASession,
+    )
+    from sqlalchemy.ext.asyncio import (
+        async_sessionmaker,
+        create_async_engine,
+    )
+
+    from halo_api.core import db as db_mod
+    from halo_api.core.config import settings as app_settings
+
+    db_url: str = request.param[1]
+    cleanup_db_file(db_url)
+    # For PostgreSQL, downgrade first to ensure a clean slate between tests.
+    run_alembic(["downgrade", "base"], db_url)
+    result = run_alembic(["upgrade", "head"], db_url)
+    assert result.returncode == 0, (
+        f"Alembic upgrade failed for {db_url}:\n{result.stderr}"
+    )
+
+    # Save original engine/session so we can restore after the test.
+    _orig_engine = db_mod.engine
+    _orig_session = db_mod.async_session
+
+    # Swap in a test engine + session factory pointing to the test DB.
+    test_engine = create_async_engine(db_url, echo=False)
+    test_session = async_sessionmaker(
+        test_engine, class_=SASession, expire_on_commit=False
+    )
+    db_mod.engine = test_engine
+    db_mod.async_session = test_session
+
+    # Disable Secure cookie flag in tests (ASGITransport uses http://test).
+    monkeypatch.setattr(app_settings, "session_secure_cookie", False)
+
+    # Disable rate limiting for HTTP tests.
+    # The rate_limit decorator captures the threshold at import time,
+    # so we must replace the inner _check_rate_limit function.
+    import halo_api.core.rate_limit as rl_mod
+
+    _orig_check = rl_mod._check_rate_limit
+
+    async def _noop_check(key: str, max_requests: int, window_seconds: int) -> bool:
+        return True
+
+    rl_mod._check_rate_limit = _noop_check
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        yield c
+
+    # Restore original rate limit check, engine, and session.
+    rl_mod._check_rate_limit = _orig_check
+    await test_engine.dispose()
+    db_mod.engine = _orig_engine
+    db_mod.async_session = _orig_session
+
+    cleanup_db_file(db_url)
+
+
 @pytest.fixture
 async def client() -> AsyncGenerator[AsyncClient]:
     """Async HTTP client for the FastAPI app.

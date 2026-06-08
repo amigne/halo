@@ -6,6 +6,9 @@ exceeded.
 
 When Redis is unavailable the rate limiter **fails open** (allows the request
 through) — this avoids blocking legitimate traffic during Redis outages.
+
+Behind a trusted reverse proxy, the client IP is derived from the first entry
+in ``X-Forwarded-For`` instead of ``request.client.host`` (T-086).
 """
 
 import logging
@@ -13,9 +16,31 @@ from collections.abc import Callable
 
 from fastapi import HTTPException, Request
 
+from halo_api.core.config import settings
 from halo_api.core.redis import get_redis
 
 logger = logging.getLogger("halo.rate_limit")
+
+
+def _get_client_ip(request: Request) -> str:
+    """Return the effective client IP, honouring ``X-Forwarded-For``.
+
+    When ``settings.trusted_proxies`` is set and the direct client is a
+    trusted proxy, the first entry in ``X-Forwarded-For`` is used.
+    Otherwise ``request.client.host`` is returned as-is.
+    """
+    direct_ip = request.client.host if request.client else "unknown"
+
+    trusted = {ip.strip() for ip in settings.trusted_proxies.split(",") if ip.strip()}
+    if not trusted or direct_ip not in trusted:
+        return direct_ip
+
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        # X-Forwarded-For: client, proxy1, proxy2, ...
+        return forwarded.split(",")[0].strip()
+
+    return direct_ip
 
 
 async def _check_rate_limit(
@@ -70,7 +95,7 @@ def rate_limit(
     """
 
     async def _rate_limit_dep(request: Request) -> None:
-        ip = request.client.host if request.client else "unknown"
+        ip = _get_client_ip(request)
         key = f"ratelimit:{prefix}:{ip}"
         allowed = await _check_rate_limit(key, max_requests, window_seconds)
         if not allowed:

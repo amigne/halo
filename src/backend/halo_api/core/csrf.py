@@ -1,46 +1,79 @@
 """CSRF protection middleware (T-071).
 
-Uses a custom header (``X-CSRF-Token``) combined with ``SameSite=Lax``
-cookies.  The frontend reads the CSRF token from a dedicated cookie and
-sends it back as a header on mutating requests.
+Double-submit cookie pattern: a ``csrf_token`` cookie (HttpOnly=False,
+readable by JS) must be sent back as an ``X-CSRF-Token`` header on every
+mutating request targeting ``/api/``.
 
-For same-origin requests the ``SameSite=Lax`` cookie provides the primary
-defense.  The custom header adds an extra layer against cross-origin form
-submissions.
+``SameSite=Lax`` provides the primary defence; the custom header adds an
+extra layer against cross-origin form submissions.
 """
 
+import secrets
 from collections.abc import Awaitable, Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+CSRF_COOKIE = "csrf_token"
+CSRF_HEADER = "X-CSRF-Token"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
+# Endpoints exempt from CSRF (e.g. the CSRF token endpoint itself).
+CSRF_EXEMPT_PATHS = {"/api/v1/auth/csrf"}
+
+
+def generate_csrf_token() -> str:
+    """Return a fresh CSPRNG CSRF token."""
+    return secrets.token_urlsafe(32)
+
+
+def set_csrf_cookie(response: Response, token: str, secure: bool) -> None:
+    """Emit the ``csrf_token`` cookie on *response*.
+
+    ``HttpOnly=False`` so the frontend can read it via ``document.cookie``
+    and send it back as a header.
+    """
+    response.set_cookie(
+        key=CSRF_COOKIE,
+        value=token,
+        httponly=False,
+        secure=secure,
+        samesite="lax",
+        path="/",
+        max_age=86400,  # 24 hours
+    )
 
 
 class CSRFCustomHeaderMiddleware(BaseHTTPMiddleware):
-    """Require ``X-CSRF-Token`` header on mutating requests.
+    """Require ``X-CSRF-Token`` header == ``csrf_token`` cookie on mutations.
 
-    The token value is read from a ``csrf_token`` cookie set by the
-    frontend.  The header must match the cookie value.
+    - Safe methods (GET/HEAD/OPTIONS/TRACE) are passed through.
+    - ``GET /api/v1/auth/csrf`` is always exempt.
+    - On mutating requests: if the cookie OR header is missing/mismatched
+      → 403 ``{"code":"CSRF_INVALID", ...}``.
     """
 
     async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+        self,
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
-        if request.method.upper() not in SAFE_METHODS:
-            cookie_token = request.cookies.get("csrf_token", "")
-            header_token = request.headers.get("X-CSRF-Token", "")
+        if request.method.upper() in SAFE_METHODS:
+            return await call_next(request)
 
-            # If the cookie is set, the header must match.
-            # An attacker on a different origin cannot read the cookie
-            # (SameSite + HttpOnly not required for CSRF token cookie),
-            # so they cannot send the matching header.
-            if cookie_token and cookie_token != header_token:
-                return Response(
-                    content='{"code":"CSRF_INVALID","message":"CSRF token mismatch"}',
-                    status_code=403,
-                    media_type="application/json",
-                )
+        if request.url.path in CSRF_EXEMPT_PATHS:
+            return await call_next(request)
+
+        cookie_token = request.cookies.get(CSRF_COOKIE, "")
+        header_token = request.headers.get(CSRF_HEADER, "")
+
+        if not cookie_token or not header_token or cookie_token != header_token:
+            return Response(
+                content=(
+                    '{"code":"CSRF_INVALID","message":"CSRF token missing or mismatch"}'
+                ),
+                status_code=403,
+                media_type="application/json",
+            )
 
         return await call_next(request)
