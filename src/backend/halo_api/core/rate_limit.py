@@ -49,7 +49,7 @@ async def _check_rate_limit(
 
 
 def rate_limit(
-    max_requests: int | Callable[[], int],
+    max_requests: int,
     window_seconds: int,
     prefix: str = "rate",
 ) -> Callable[..., object]:
@@ -63,12 +63,8 @@ def rate_limit(
             _rate: None = Depends(rate_limit(5, 60, "login")),
         ): ...
 
-    *max_requests* can be an ``int`` or a zero-argument callable returning an
-    ``int``.  The callable form reads the limit dynamically at request time
-    (useful for testability via Settings monkeypatching).
-
     Args:
-        max_requests: Maximum requests allowed in the window (or callable).
+        max_requests: Maximum number of requests allowed in the window.
         window_seconds: Duration of the rate limit window in seconds.
         prefix: Key prefix for Redis (e.g. "login", "register").
     """
@@ -76,8 +72,7 @@ def rate_limit(
     async def _rate_limit_dep(request: Request) -> None:
         ip = request.client.host if request.client else "unknown"
         key = f"ratelimit:{prefix}:{ip}"
-        limit = max_requests() if callable(max_requests) else max_requests
-        allowed = await _check_rate_limit(key, limit, window_seconds)
+        allowed = await _check_rate_limit(key, max_requests, window_seconds)
         if not allowed:
             raise HTTPException(
                 status_code=429,

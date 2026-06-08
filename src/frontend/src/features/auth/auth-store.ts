@@ -1,7 +1,6 @@
 /** Session state — TanStack Query hooks for auth. */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchWrapper } from "@/shared/api/fetch-wrapper";
 
 interface User {
   id: string;
@@ -23,8 +22,13 @@ interface AuthStatus {
 }
 
 async function fetchAuthStatus(): Promise<AuthStatus> {
-  const data = await fetchWrapper<AuthStatus>("/api/v1/auth/me");
-  return data;
+  const resp = await fetch("/api/v1/auth/me", {
+    headers: { Accept: "application/json" },
+  });
+  if (!resp.ok) {
+    return { authenticated: false, user: null };
+  }
+  return resp.json();
 }
 
 export function useAuth() {
@@ -40,7 +44,7 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return async () => {
-    await fetchWrapper("/api/v1/auth/logout", { method: "POST" });
+    await fetch("/api/v1/auth/logout", { method: "POST" });
     queryClient.setQueryData(["auth", "me"], {
       authenticated: false,
       user: null,

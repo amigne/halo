@@ -61,7 +61,7 @@ async def _email_exists(db: AsyncSession, email: str) -> bool:
     dependencies=[
         Depends(
             rate_limit(
-                lambda s=settings: s.rate_limit_register_per_hour,
+                settings.rate_limit_register_per_hour,
                 3600,
                 "register",
             )
@@ -196,7 +196,7 @@ async def verify_email(
     dependencies=[
         Depends(
             rate_limit(
-                lambda s=settings: s.rate_limit_login_per_minute,
+                settings.rate_limit_login_per_minute,
                 60,
                 "login",
             )
@@ -285,7 +285,7 @@ async def me(
     dependencies=[
         Depends(
             rate_limit(
-                lambda s=settings: s.rate_limit_reset_per_hour,
+                settings.rate_limit_reset_per_hour,
                 3600,
                 "reset",
             )
