@@ -4,9 +4,13 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRouter
 from starlette.responses import JSONResponse
 
+from halo_api.accounts.router import router as accounts_router
+from halo_api.core.config import settings
+from halo_api.core.csrf import CSRFCustomHeaderMiddleware
 from halo_api.core.db import check_db, engine
 from halo_api.core.redis import check_redis, close_redis
 
@@ -21,11 +25,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 app = FastAPI(
     title="Halo API",
-    version="0.0.1",
+    version="0.0.2",
     lifespan=lifespan,
 )
 
-# --- /api/v1 router ---
+# ── CORS ─────────────────────────────────────────────────────────────────────
+
+cors_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── CSRF (T-071) ─────────────────────────────────────────────────────────────
+
+app.add_middleware(CSRFCustomHeaderMiddleware)
+
+# ── /api/v1 router ───────────────────────────────────────────────────────────
+
 v1_router = APIRouter(prefix="/api/v1")
 
 
@@ -49,4 +69,7 @@ async def ready() -> JSONResponse:
     )
 
 
+# ── Mount routers ────────────────────────────────────────────────────────────
+
+v1_router.include_router(accounts_router)
 app.include_router(v1_router)

@@ -4,8 +4,6 @@ Every persistence-affecting test is parametrised across SQLite and PostgreSQL
 via the ``db_url`` fixture from ``conftest.py``.
 """
 
-import uuid
-
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -135,9 +133,22 @@ async def test_enable_creates_row_and_sets_enabled(db_url: str) -> None:
         engine, class_=AsyncSession, expire_on_commit=False
     )
 
-    admin_id = uuid.uuid7()
+    from halo_api.accounts.models import User
 
     async with session_factory() as session:
+        # Create a user so the FK constraint on enabled_by is satisfied
+        user = User(
+            email="test_enable_mod_admin@test.local",
+            password_hash="dummy",
+            first_name="Admin",
+            last_name="Test",
+            is_admin=True,
+            is_verified=True,
+        )
+        session.add(user)
+        await session.flush()
+
+        admin_id = user.id
         await enable(session, "test_enable_mod", enabled_by=admin_id)
         await session.commit()
 

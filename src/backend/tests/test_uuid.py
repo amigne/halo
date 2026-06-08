@@ -59,9 +59,23 @@ async def test_module_enabled_by_uuid_roundtrip(db_url: str) -> None:
         engine, class_=AsyncSession, expire_on_commit=False
     )
 
-    admin_id = uuid.uuid7()
+    from halo_api.accounts.models import User
 
     async with session_factory() as session:
+        # Create a user so the FK constraint on enabled_by is satisfied
+        user = User(
+            email="test_uuid_roundtrip_admin@test.local",
+            password_hash="dummy",
+            first_name="Admin",
+            last_name="Test",
+            is_admin=True,
+            is_verified=True,
+        )
+        session.add(user)
+        await session.flush()
+
+        admin_id = user.id
+
         # -- insert -------------------------------------------------------------
         mod = Module(key="test_uuid_roundtrip", enabled=True, enabled_by=admin_id)
         session.add(mod)
