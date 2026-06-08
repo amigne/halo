@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/shared/ui/Button";
 import { Spinner } from "@/shared/ui/Spinner";
+import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 export function RegisterPage() {
   const { t } = useTranslation();
@@ -20,21 +21,8 @@ export function RegisterPage() {
     setLoading(true);
 
     try {
-      await fetch("/api/v1/auth/csrf");
-      const csrfToken =
-        document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.at(1) ?? "";
-      const resp = await fetch("/api/v1/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-        }),
+      const resp = await apiMutate("/api/v1/auth/register", {
+        body: { email, password, first_name: firstName, last_name: lastName },
       });
 
       if (!resp.ok) {

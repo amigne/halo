@@ -1,6 +1,7 @@
 /** Session state — TanStack Query hooks for auth. */
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 interface User {
   id: string;
@@ -44,7 +45,7 @@ export function useLogout() {
   const queryClient = useQueryClient();
 
   return async () => {
-    await fetch("/api/v1/auth/logout", { method: "POST" });
+    await apiMutate("/api/v1/auth/logout");
     queryClient.setQueryData(["auth", "me"], {
       authenticated: false,
       user: null,

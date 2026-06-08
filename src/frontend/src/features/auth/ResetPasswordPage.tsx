@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useSearch, Link } from "@tanstack/react-router";
 import { Button } from "@/shared/ui/Button";
 import { Spinner } from "@/shared/ui/Spinner";
+import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 export function ResetPasswordPage() {
   const { t } = useTranslation();
@@ -29,16 +30,8 @@ export function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      await fetch("/api/v1/auth/csrf");
-      const csrfToken =
-        document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.at(1) ?? "";
-      const resp = await fetch("/api/v1/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-        },
-        body: JSON.stringify({ token, password }),
+      const resp = await apiMutate("/api/v1/auth/reset-password", {
+        body: { token, password },
       });
       const data = await resp.json();
       if (

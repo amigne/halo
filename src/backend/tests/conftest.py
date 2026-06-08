@@ -170,6 +170,48 @@ async def http_client(
     cleanup_db_file(db_url)
 
 
+@pytest.fixture(params=DB_PARAMS, ids=[f"rl-{i}" for i in DB_IDS])
+async def http_client_rl(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncGenerator[AsyncClient]:
+    """Like http_client but WITHOUT disabling rate limiting (Redis required)."""
+    if not _redis_available():
+        pytest.skip("Redis not available")
+
+    from sqlalchemy.ext.asyncio import (
+        AsyncSession as SASession,
+    )
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    from halo_api.core import db as db_mod
+    from halo_api.core.config import settings as app_settings
+
+    db_url: str = request.param[1]
+    cleanup_db_file(db_url)
+    run_alembic(["downgrade", "base"], db_url)
+    result = run_alembic(["upgrade", "head"], db_url)
+    assert result.returncode == 0, f"Alembic upgrade failed:\n{result.stderr}"
+
+    _orig_engine = db_mod.engine
+    _orig_session = db_mod.async_session
+    test_engine = create_async_engine(db_url, echo=False)
+    db_mod.engine = test_engine
+    db_mod.async_session = async_sessionmaker(
+        test_engine, class_=SASession, expire_on_commit=False
+    )
+    monkeypatch.setattr(app_settings, "session_secure_cookie", False)
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        yield c
+
+    await test_engine.dispose()
+    db_mod.engine = _orig_engine
+    db_mod.async_session = _orig_session
+    cleanup_db_file(db_url)
+
+
 @pytest.fixture
 async def client() -> AsyncGenerator[AsyncClient]:
     """Async HTTP client for the FastAPI app.

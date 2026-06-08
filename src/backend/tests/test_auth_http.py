@@ -371,3 +371,87 @@ async def test_reset_token_expired(http_client: AsyncClient) -> None:
     )
     assert r.status_code == 200
     assert "invalid" in r.json()["message"].lower()
+
+
+# ── Verify-email via endpoints (T-082) ─────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_verify_email_get_then_post(http_client: AsyncClient) -> None:
+    """GET inspects (no consume); POST consumes; second POST is rejected."""
+    csrf = await _fetch_csrf(http_client)
+
+    # Create an unverified user + a verify token directly in DB.
+    from halo_api.core import db as db_mod
+
+    sf = async_sessionmaker(db_mod.engine, class_=AsyncSession, expire_on_commit=False)
+    cleartext, token_hash_val = generate_token()
+    async with sf() as s:
+        user = User(
+            email="verify-ep@test.local",
+            password_hash=hash_password("pw12345678"),
+            first_name="V",
+            last_name="E",
+            is_verified=False,
+        )
+        s.add(user)
+        await s.flush()
+        s.add(
+            EmailToken(
+                user_id=user.id,
+                purpose="verify",
+                token_hash=token_hash_val,
+                expires_at=datetime.now(UTC) + timedelta(minutes=60),
+            )
+        )
+        await s.commit()
+
+    # GET — valid, does NOT consume.
+    r_get = await http_client.get(f"/api/v1/auth/verify-email?token={cleartext}")
+    assert r_get.status_code == 200
+    assert "valid" in r_get.json()["message"].lower()
+
+    # POST — consumes, marks verified (token is a query parameter).
+    r_post = await _csrf_post(
+        http_client,
+        "/api/v1/auth/verify-email",
+        csrf,
+        params={"token": cleartext},
+    )
+    assert r_post.status_code == 200
+    assert "success" in r_post.json()["message"].lower()
+
+    # Second POST — already used → rejected.
+    r_again = await _csrf_post(
+        http_client,
+        "/api/v1/auth/verify-email",
+        csrf,
+        params={"token": cleartext},
+    )
+    assert "invalid" in r_again.json()["message"].lower()
+
+
+# ── CSRF guard on logout ───────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_csrf_blocks_logout_without_header(http_client: AsyncClient) -> None:
+    """POST /logout without X-CSRF-Token → 403 (guards the auth-store regression)."""
+    r = await http_client.post("/api/v1/auth/logout")
+    assert r.status_code == 403
+    assert r.json()["code"] == "CSRF_INVALID"
+
+
+# ── Rate limit 429 ─────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_login_rate_limited_429(http_client_rl: AsyncClient) -> None:
+    """Exceeding the login rate limit returns 429."""
+    csrf = await _fetch_csrf(http_client_rl)
+    body = {"email": "rl@test.local", "password": "whatever1"}
+    statuses = []
+    for _ in range(7):  # default limit is 5/min
+        r = await _csrf_post(http_client_rl, "/api/v1/auth/login", csrf, json=body)
+        statuses.append(r.status_code)
+    assert 429 in statuses, f"expected a 429 among {statuses}"

@@ -4,6 +4,7 @@ import { useNavigate, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/ui/Button";
 import { Spinner } from "@/shared/ui/Spinner";
+import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -20,20 +21,8 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      // Ensure CSRF cookie is set before POST (T-071).
-      await fetch("/api/v1/auth/csrf");
-      const csrfToken =
-        document.cookie
-          .match(/(?:^|; )csrf_token=([^;]*)/)
-          ?.at(1) ?? "";
-
-      const resp = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-        },
-        body: JSON.stringify({ email, password }),
+      const resp = await apiMutate("/api/v1/auth/login", {
+        body: { email, password },
       });
 
       if (!resp.ok) {

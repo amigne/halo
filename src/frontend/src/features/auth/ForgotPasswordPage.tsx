@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/shared/ui/Button";
 import { Spinner } from "@/shared/ui/Spinner";
+import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 export function ForgotPasswordPage() {
   const { t } = useTranslation();
@@ -14,17 +15,7 @@ export function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await fetch("/api/v1/auth/csrf");
-      const csrfToken =
-        document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.at(1) ?? "";
-      await fetch("/api/v1/auth/forgot-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
-        },
-        body: JSON.stringify({ email }),
-      });
+      await apiMutate("/api/v1/auth/forgot-password", { body: { email } });
     } finally {
       setSent(true);
       setLoading(false);

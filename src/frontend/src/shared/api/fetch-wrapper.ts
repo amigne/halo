@@ -34,4 +34,38 @@ export async function apiGet<P extends keyof paths>(
   return response.json();
 }
 
-export const api = { get: apiGet };
+/** Read the (non-HttpOnly) csrf_token cookie set by the backend. */
+function readCsrfCookie(): string {
+  return document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.at(1) ?? "";
+}
+
+/**
+ * Perform a mutating request (POST/PUT/PATCH/DELETE) with CSRF protection (T-071).
+ *
+ * Ensures a `csrf_token` cookie exists (fetching `GET /api/v1/auth/csrf` if
+ * needed), then sends it back as the `X-CSRF-Token` header. Returns the raw
+ * `Response` so callers can inspect `.ok`/`.status` and parse the JSON body.
+ */
+export async function apiMutate(
+  path: string,
+  options: { method?: string; body?: unknown; signal?: AbortSignal } = {},
+): Promise<Response> {
+  let csrf = readCsrfCookie();
+  if (!csrf) {
+    await fetch(`${BASE_URL}/api/v1/auth/csrf`, { credentials: "same-origin" });
+    csrf = readCsrfCookie();
+  }
+  return fetch(`${BASE_URL}${path}`, {
+    method: options.method ?? "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(csrf ? { "X-CSRF-Token": csrf } : {}),
+    },
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    signal: options.signal,
+  });
+}
+
+export const api = { get: apiGet, mutate: apiMutate };

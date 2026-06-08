@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useSearch, Link } from "@tanstack/react-router";
 import { Spinner } from "@/shared/ui/Spinner";
 import { Button } from "@/shared/ui/Button";
+import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 export function VerifyEmailPage() {
   const { t } = useTranslation();
@@ -40,11 +41,9 @@ export function VerifyEmailPage() {
     setStatus("verifying");
 
     try {
-      const resp = await fetch("/api/v1/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+      const resp = await apiMutate(
+        `/api/v1/auth/verify-email?token=${encodeURIComponent(token)}`,
+      );
       const data = await resp.json();
       if (
         typeof data.message === "string" &&
