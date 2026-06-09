@@ -1,6 +1,6 @@
 import { type ChangeEvent, useId, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { formatDateTime, toUtcIso } from "@/shared/datetime/format";
+import { toUtcIso } from "@/shared/datetime/format";
 
 interface DateTimePickerProps {
   /** HTML id for label association. Auto-generated if omitted. */
@@ -13,8 +13,6 @@ interface DateTimePickerProps {
   onChange: (utcIso: string) => void;
   /** IANA timezone for display/conversion (e.g. "Europe/Paris"). */
   timezone: string;
-  /** BCP 47 language tag for formatting (e.g. "fr", "en"). */
-  lang?: string;
   /** Error message — sets aria-invalid and displays inline. */
   error?: string;
   /** Minimum allowed UTC ISO value. */
@@ -24,9 +22,40 @@ interface DateTimePickerProps {
 }
 
 /**
+ * Convert a UTC ISO string to a datetime-local input value (YYYY-MM-DDTHH:MM)
+ * in the given IANA timezone, independent of the display locale.
+ *
+ * Uses Intl.DateTimeFormat with `formatToParts` on a fixed format locale
+ * (`sv-SE`) that natively produces ISO-8601-like date ordering.
+ */
+function toLocalDatetimeInput(utcIso: string, tz: string): string {
+  try {
+    const date = new Date(utcIso);
+    if (isNaN(date.getTime())) return "";
+
+    const parts = new Intl.DateTimeFormat("sv-SE", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(date);
+
+    const get = (type: string): string =>
+      parts.find((p) => p.type === type)?.value ?? "00";
+
+    return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+  } catch {
+    return "";
+  }
+}
+
+/**
  * Accessible date/time picker.
  *
- * - Displays the UTC value in the user's timezone via `formatDateTime`
+ * - Displays the UTC value in the user's timezone via `formatToParts`
  * - Converts local input back to UTC via `toUtcIso` before calling `onChange`
  * - Uses native `<input type="datetime-local">` for broad accessibility
  * - `aria-label` + `aria-invalid` + `aria-describedby` for error state
@@ -37,7 +66,6 @@ export function DateTimePicker({
   value,
   onChange,
   timezone,
-  lang = "fr",
   error,
   min,
   max,
@@ -48,53 +76,21 @@ export function DateTimePicker({
   const { t } = useTranslation();
 
   // Convert UTC ISO → local datetime-local string (YYYY-MM-DDTHH:MM)
-  const localValue = useMemo(() => {
-    try {
-      return formatDateTime(value, timezone, lang, {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }).replace(/(\d{2})\/(\d{2})\/(\d{4}),?\s*/, "$3-$2-$1T");
-    } catch {
-      return "";
-    }
-  }, [value, timezone, lang]);
+  const localValue = useMemo(
+    () => toLocalDatetimeInput(value, timezone),
+    [value, timezone],
+  );
 
   // Convert min/max UTC → local
-  const localMin = useMemo(() => {
-    if (!min) return undefined;
-    try {
-      return formatDateTime(min, timezone, lang, {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }).replace(/(\d{2})\/(\d{2})\/(\d{4}),?\s*/, "$3-$2-$1T");
-    } catch {
-      return undefined;
-    }
-  }, [min, timezone, lang]);
+  const localMin = useMemo(
+    () => (min ? toLocalDatetimeInput(min, timezone) : undefined),
+    [min, timezone],
+  );
 
-  const localMax = useMemo(() => {
-    if (!max) return undefined;
-    try {
-      return formatDateTime(max, timezone, lang, {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }).replace(/(\d{2})\/(\d{2})\/(\d{4}),?\s*/, "$3-$2-$1T");
-    } catch {
-      return undefined;
-    }
-  }, [max, timezone, lang]);
+  const localMax = useMemo(
+    () => (max ? toLocalDatetimeInput(max, timezone) : undefined),
+    [max, timezone],
+  );
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const localInput = e.target.value;
