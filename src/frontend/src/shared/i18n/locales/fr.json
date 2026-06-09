@@ -87,6 +87,9 @@
     "emptyState": {
       "noResults": "Aucun résultat",
       "defaultDescription": "Il n'y a rien à afficher pour le moment."
+    },
+    "modal": {
+      "close": "Fermer la modale"
     }
   }
 }

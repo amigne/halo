@@ -12,6 +12,14 @@ import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
 
 const rootRoute = createRootRoute({
   component: AppLayout,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { modal?: string[] } => ({
+    modal:
+      Array.isArray(search.modal)
+        ? search.modal.filter((m): m is string => typeof m === "string")
+        : undefined,
+  }),
 });
 
 // ── Leaf routes ─────────────────────────────────────────────────────────────

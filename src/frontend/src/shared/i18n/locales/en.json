@@ -87,6 +87,9 @@
     "emptyState": {
       "noResults": "No results",
       "defaultDescription": "There is nothing to display at the moment."
+    },
+    "modal": {
+      "close": "Close modal"
     }
   }
 }

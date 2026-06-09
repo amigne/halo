@@ -2,6 +2,7 @@ import { Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ThemeSwitcher } from "@/shared/theme/ThemeSwitcher";
 import { LanguageSwitcher } from "@/shared/i18n/LanguageSwitcher";
+import { ModalHost } from "@/shared/modal/ModalHost";
 
 export function AppLayout() {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ export function AppLayout() {
       <main className="p-4">
         <Outlet />
       </main>
+      <ModalHost />
     </div>
   );
 }

@@ -11,4 +11,5 @@ export { Tabs } from "./Tabs";
 export type { TabItem } from "./Tabs";
 export { DateTimePicker } from "./DateTimePicker";
 export { EmptyState } from "./EmptyState";
+export { Modal } from "./Modal";
 export { Spinner } from "./Spinner";
