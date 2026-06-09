@@ -24,6 +24,28 @@
     "error": "Error",
     "checking": "Checking…"
   },
+  "layout": {
+    "menu": {
+      "expand": "Expand menu",
+      "collapse": "Collapse menu",
+      "modules": "Modules",
+      "admin": "Administration",
+      "close": "Close menu"
+    },
+    "topbar": {
+      "logoAriaLabel": "Back to home",
+      "notifications": "Notifications",
+      "userMenu": {
+        "profile": "Profile",
+        "logout": "Logout"
+      }
+    },
+    "footer": {
+      "copyright": "Halo — MIT License",
+      "privacy": "Privacy",
+      "privacyUrl": "/privacy"
+    }
+  },
   "auth": {
     "login": "Login",
     "register": "Register",
