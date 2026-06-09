@@ -7,8 +7,11 @@
     <script>
       // Anti-flash theme (U-092): apply theme before first paint
       (function () {
-        var stored = localStorage.getItem("halo-theme");
-        var theme = stored || "system";
+        var stored = localStorage.getItem("halo.theme");
+        var theme =
+          stored === "light" || stored === "dark" || stored === "system"
+            ? stored
+            : "system";
         if (theme === "system") {
           theme = window.matchMedia("(prefers-color-scheme: dark)").matches
             ? "dark"
