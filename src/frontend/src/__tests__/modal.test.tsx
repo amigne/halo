@@ -519,12 +519,17 @@ describe("useRoutedModal", () => {
     expect(routerMock.navigate).not.toHaveBeenCalled();
   });
 
-  it("isOpen returns true when the key is in the stack", () => {
+  it("isOpen returns true/false depending on whether the key is in the stack", () => {
+    // Key "a" is NOT in the stack
     searchState.modal = ["settings"];
-    renderTest();
+    const { unmount } = renderTest();
     expect(screen.getByTestId("a-open").textContent).toBe("false");
+
+    // Re-render with key "a" now in the stack
+    unmount();
     searchState.modal = ["a"];
     renderTest();
+    expect(screen.getByTestId("a-open").textContent).toBe("true");
   });
 });
 
