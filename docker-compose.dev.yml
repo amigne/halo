@@ -45,6 +45,28 @@ services:
       retries: 3
     restart: unless-stopped
 
+  # ── Worker (email processor) ──────────────────────────────────────────────
+  worker:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile.dev
+    image: halo-backend-dev:latest
+    container_name: halo-worker-dev
+    volumes:
+      - ./src/backend/halo_api:/app/halo_api:ro
+      - ./src/backend/pyproject.toml:/app/pyproject.toml:ro
+      - halo_dev_data:/app/data
+    env_file:
+      - .env.dev
+    depends_on:
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    command:
+      ["uv", "run", "python", "-m", "halo_api.worker"]
+    restart: unless-stopped
+
   # ── Frontend (Vite HMR) ────────────────────────────────────────────────────
   frontend:
     build:

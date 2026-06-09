@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 # points to "." which resolves to src/backend).
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import halo_api.accounts.models
 import halo_api.modules.models  # noqa: F401 — registers Module in Base.metadata
 from halo_api.core.config import settings
 from halo_api.core.db import Base

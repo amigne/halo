@@ -35,7 +35,7 @@ def require_module_enabled(module_key: str) -> Callable[..., object]:
 
     async def _check(
         request: Request,
-        session: AsyncSession = Depends(get_session),  # noqa: B008
+        session: AsyncSession = Depends(get_session),
     ) -> None:
         enabled = await is_enabled(session, module_key)
         if not enabled:

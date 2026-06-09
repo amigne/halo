@@ -30,9 +30,25 @@ async def close_redis() -> None:
 
 
 async def check_redis() -> bool:
-    """Ping Redis — returns ``True`` when reachable."""
+    """Ping Redis — returns ``True`` when reachable.
+
+    If the first attempt fails, the shared client is reset and a second
+    attempt is made (handles stale connections after lifespan restarts).
+    """
     try:
         r = await get_redis()
         return await r.ping() is True  # redis-py 8 returns bool from ping()
     except Exception:
-        return False
+        # Connection may be stale — reset and retry once
+        global _redis
+        if _redis is not None:
+            import contextlib
+
+            with contextlib.suppress(Exception):
+                await _redis.aclose()
+            _redis = None
+        try:
+            r2 = await get_redis()
+            return await r2.ping() is True
+        except Exception:
+            return False
