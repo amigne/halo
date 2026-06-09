@@ -14,3 +14,9 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: () => false,
   }),
 });
+
+// Force French locale for deterministic i18n assertions in tests
+Object.defineProperty(navigator, "language", {
+  value: "fr",
+  configurable: true,
+});

@@ -113,7 +113,7 @@ describe("Modal", () => {
         </Modal>
       </I18nWrapper>,
     );
-    const closeBtn = screen.getByRole("button", { name: /close/i });
+    const closeBtn = screen.getByRole("button", { name: /fermer/i });
     expect(closeBtn).toBeInTheDocument();
   });
 
@@ -126,7 +126,7 @@ describe("Modal", () => {
         </Modal>
       </I18nWrapper>,
     );
-    const closeBtn = screen.getByRole("button", { name: /close/i });
+    const closeBtn = screen.getByRole("button", { name: /fermer/i });
     fireEvent.click(closeBtn);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -306,7 +306,7 @@ describe("Modal focus trap", () => {
 
     // Should wrap to the first focusable element (the ✕ close button)
     expect(document.activeElement).toBe(
-      screen.getByRole("button", { name: /close modal/i }),
+      screen.getByRole("button", { name: /fermer la modale/i }),
     );
   });
 
@@ -327,7 +327,7 @@ describe("Modal focus trap", () => {
     });
 
     // Manually focus the first element (close button)
-    const closeBtn = screen.getByRole("button", { name: /close modal/i });
+    const closeBtn = screen.getByRole("button", { name: /fermer la modale/i });
     act(() => closeBtn.focus());
     expect(document.activeElement).toBe(closeBtn);
 
@@ -626,10 +626,10 @@ describe("ModalHost", () => {
       </I18nWrapper>,
     );
 
-    // The ✕ close button has aria-label "Close modal" — target it specifically
+    // The ✕ close button has aria-label "Fermer la modale" — target it specifically
     // to distinguish from the "Close from inside" button rendered by FakeContent
     const closeButtons = screen.getAllByRole("button", {
-      name: /close modal/i,
+      name: /fermer la modale/i,
     });
     expect(closeButtons.length).toBeGreaterThanOrEqual(1);
     fireEvent.click(closeButtons[0]!);

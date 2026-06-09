@@ -91,5 +91,11 @@
     "modal": {
       "close": "Close modal"
     }
+  },
+  "autosave": {
+    "saving": "Saving…",
+    "saved": "Saved",
+    "error": "Save error",
+    "retry": "Retry"
   }
 }

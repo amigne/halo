@@ -91,5 +91,11 @@
     "modal": {
       "close": "Fermer la modale"
     }
+  },
+  "autosave": {
+    "saving": "Enregistrement…",
+    "saved": "Enregistré",
+    "error": "Erreur d'enregistrement",
+    "retry": "Réessayer"
   }
 }
