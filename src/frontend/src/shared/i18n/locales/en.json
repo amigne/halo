@@ -54,5 +54,39 @@
     "fieldRequired": "This field is required",
     "passwordMinLength": "Minimum 8 characters",
     "passwordMismatch": "Passwords do not match"
+  },
+  "demo": {
+    "greeting": "Hello {{name}}!",
+    "inbox": "You have {{count}} unread message",
+    "inbox_other": "You have {{count}} unread messages"
+  },
+  "ui": {
+    "spinner": { "loading": "Loading…" },
+    "button": { "loading": "Loading" },
+    "input": { "error": "Error" },
+    "select": { "placeholder": "Select…" },
+    "toast": {
+      "close": "Close",
+      "error": "Error",
+      "success": "Success",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "tooltip": { "close": "Close" },
+    "toggle": { "on": "On", "off": "Off" },
+    "table": {
+      "noData": "No data",
+      "sortAsc": "Sort ascending",
+      "sortDesc": "Sort descending"
+    },
+    "tabs": { "tab": "Tab" },
+    "dateTimePicker": {
+      "selectDate": "Select date",
+      "selectTime": "Select time"
+    },
+    "emptyState": {
+      "noResults": "No results",
+      "defaultDescription": "There is nothing to display at the moment."
+    }
   }
 }
