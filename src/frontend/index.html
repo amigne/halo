@@ -1,9 +1,20 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Halo</title>
+    <script>
+      // Anti-flash language (U-100): set <html lang> before first paint
+      (function () {
+        var lang = localStorage.getItem("halo.lang");
+        if (!lang) {
+          var nav = (navigator.language || "").split("-")[0].toLowerCase();
+          lang = nav === "fr" || nav === "en" ? nav : "en";
+        }
+        document.documentElement.lang = lang;
+      })();
+    </script>
     <script>
       // Anti-flash theme (U-092): apply theme before first paint
       (function () {

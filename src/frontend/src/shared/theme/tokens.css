@@ -1,49 +1,98 @@
-@import "tailwindcss";
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Halo Design Tokens — spec §11 (U-110..U-114)
+   ═══════════════════════════════════════════════════════════════════════════════
 
-/* ── Halo design tokens (U-110, U-113, U-114) ─────────────────────────────── */
+   Convention : tout le CSS de l'appli consomme CES variables.
+   Aucune couleur en dur dans les composants.
 
-@theme {
-  /* Spacing — 4 px base grid (U-114) */
-  --spacing: 0.25rem;
+   Thème : :root = jour (défaut), :root[data-theme="dark"] = nuit.
+   Le sélecteur data-theme est posé sur <html> par le store JS (étape 3-2).
 
-  /* Z-index scale (U-113): content < menu < topbar < overlay < modal < popup < toast */
-  --z-index-content: 0;
-  --z-index-menu: 10;
-  --z-index-topbar: 20;
-  --z-index-overlay: 30;
-  --z-index-modal: 40;
-  --z-index-popup: 50;
-  --z-index-toast: 60;
+   Contraste AA (U-120) : ratios documentés ci-dessous. Cible ≥ 4.5:1.
+   ═══════════════════════════════════════════════════════════════════════════════ */
 
-  /* Border radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
+/* ── Jour (défaut) ──────────────────────────────────────────────────────────── */
 
-  /* Light theme (default) */
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #3b82f6;
-  --color-primary-600: #2563eb;
-  --color-primary-700: #1d4ed8;
-  --color-primary-800: #1e40af;
-  --color-primary-900: #1e3a8a;
-
+:root {
+  /* Couleurs sémantiques
+     Ratios de contraste (AA ≥ 4.5:1) :
+     - --color-text sur --color-bg        : #0f172a / #f8fafc ≈ 15.4:1 ✓
+     - --color-primary-contrast sur --color-primary : #ffffff / #2563eb ≈ 5.6:1 ✓
+  */
+  --color-bg: #f8fafc;
   --color-surface: #ffffff;
-  --color-surface-alt: #f9fafb;
-  --color-foreground: #111827;
-  --color-foreground-muted: #6b7280;
-  --color-border: #e5e7eb;
+  --color-border: #cbd5e1;
+  --color-text: #0f172a;
+  --color-text-muted: #334155; /* ratio sur --color-bg (#f8fafc) ≈ 7.5:1 — AA confortable */
+  --color-primary: #2563eb;
+  --color-primary-contrast: #ffffff;
+  --color-danger: #b91c1c;
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-focus-ring: #3b82f6;
+
+  /* Espacements — grille base 4 px (U-114) */
+  --space-1: 0.25rem;   /*  4px */
+  --space-2: 0.5rem;    /*  8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-7: 1.75rem;   /* 28px */
+  --space-8: 2rem;      /* 32px */
+
+  /* Rayons */
+  --radius-sm: 0.25rem;   /*  4px */
+  --radius-md: 0.375rem;  /*  6px */
+  --radius-lg: 0.5rem;    /*  8px */
+
+  /* Ombres */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Typographie */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+
+  /* Z-index documenté (U-113) : dropdown < sticky < overlay < modal < toast < tooltip */
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-overlay: 1200;
+  --z-modal: 1300;
+  --z-toast: 1400;
+  --z-tooltip: 1500;
 }
 
-/* Dark theme overrides */
-[data-theme="dark"] {
-  --color-surface: #111827;
-  --color-surface-alt: #1f2937;
-  --color-foreground: #f9fafb;
-  --color-foreground-muted: #9ca3af;
-  --color-border: #374151;
+/* ── Nuit ───────────────────────────────────────────────────────────────────── */
+
+:root[data-theme="dark"] {
+  /* Ratios de contraste nuit (AA ≥ 4.5:1) :
+     - --color-text sur --color-bg        : #f8fafc / #0f172a ≈ 15.4:1 ✓
+     - --color-primary-contrast sur --color-primary : #ffffff / #2563eb ≈ 5.6:1 ✓
+  */
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-border: #475569;
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-primary: #2563eb;
+  --color-primary-contrast: #ffffff;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-focus-ring: #60a5fa;
+
+  /* Espacements, rayons, typo, z-index : inchangés (hérités de :root) */
+
+  /* Ombres — adaptées au fond sombre */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
 }

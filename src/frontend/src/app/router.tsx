@@ -7,6 +7,7 @@ import { RegisterPage } from "@/features/auth/RegisterPage";
 import { VerifyEmailPage } from "@/features/auth/VerifyEmailPage";
 import { ForgotPasswordPage } from "@/features/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage";
+import { SettingsPage } from "@/features/settings/SettingsPage";
 
 // ── Root route ──────────────────────────────────────────────────────────────
 
@@ -66,6 +67,12 @@ const resetPasswordRoute = createRoute({
   }),
 });
 
+const settingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/settings",
+  component: SettingsPage,
+});
+
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "*",
@@ -81,6 +88,7 @@ const routeTree = rootRoute.addChildren([
   verifyEmailRoute,
   forgotPasswordRoute,
   resetPasswordRoute,
+  settingsRoute,
   notFoundRoute,
 ]);
 
