@@ -9,6 +9,8 @@ import type { Breakpoint } from "./use-breakpoint";
 interface TopbarProps {
   breakpoint: Breakpoint;
   onHamburgerClick: () => void;
+  /** Whether the mobile drawer is open — used for aria-expanded (U-123). */
+  mobileOpen: boolean;
 }
 
 /**
@@ -18,7 +20,7 @@ interface TopbarProps {
  * theme selector, bell placeholder, avatar → user menu.
  * All interactive surfaces have ≥ 44×44 px touch targets (U-014).
  */
-export function Topbar({ breakpoint, onHamburgerClick }: TopbarProps) {
+export function Topbar({ breakpoint, onHamburgerClick, mobileOpen }: TopbarProps) {
   const { t } = useTranslation();
   const { lang, setLang } = useLanguage();
   const { pref, setPref } = useTheme();
@@ -68,6 +70,7 @@ export function Topbar({ breakpoint, onHamburgerClick }: TopbarProps) {
             onClick={onHamburgerClick}
             className="flex items-center justify-center rounded-md p-2 text-text hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none min-h-[44px] min-w-[44px] cursor-pointer"
             aria-label={t("layout.menu.close")}
+            aria-expanded={mobileOpen}
           >
             <svg
               width="20"
@@ -224,9 +227,9 @@ export function Topbar({ breakpoint, onHamburgerClick }: TopbarProps) {
               role="menu"
               className="absolute right-0 top-full mt-1 w-48 rounded-md border border-border bg-surface shadow-md z-[var(--z-dropdown)]"
             >
-              {/* Profile (route added in step 3-9) */}
+              {/* Settings page (step 3-9) */}
               <a
-                href="/profile"
+                href="/settings"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-text hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none min-h-[44px] cursor-pointer no-underline"
                 role="menuitem"
                 onClick={closeUserMenu}

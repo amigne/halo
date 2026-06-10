@@ -46,6 +46,29 @@ Le backend Python utilise `urllib.request.urlopen` qui gère correctement IPv6.
 Le conteneur crée lui-même un sous-répertoire par version majeure, permettant
 les mises à niveau `pg_upgrade --link`.
 
+## E2E Playwright (étape 3-10)
+
+Les tests E2E sont dans `src/frontend/e2e/` et utilisent Playwright 1.60.
+
+**Lancement :**
+```bash
+cd src/frontend
+npx playwright test
+```
+Le `webServer` configuré dans `playwright.config.ts` démarre automatiquement
+Vite sur le port 5173. Pour utiliser un serveur déjà lancé :
+```bash
+npx playwright test --ignore-url
+```
+Ou depuis la racine du projet avec Docker Compose :
+```bash
+docker compose -f docker-compose.dev.yml up -d
+cd src/frontend && npx playwright test
+```
+
+Les tests mockent les appels API (`/api/v1/auth/me`, `/api/v1/users/me`) pour
+être indépendants du backend.
+
 ## `uv sync --all-extras` (étape 1e)
 
 `uv 0.11.18` n'installe pas les `[project.optional-dependencies]` par défaut.

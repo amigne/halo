@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Outlet } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { useBreakpoint } from "./use-breakpoint";
 import type { Breakpoint } from "./use-breakpoint";
 import { Topbar } from "./Topbar";
@@ -46,6 +47,7 @@ function writeStored(bp: Breakpoint, value: boolean): void {
  * persisted immediately.
  */
 export function AppLayout() {
+  const { t } = useTranslation();
   const bp = useBreakpoint();
 
   // ── Collapsed state per breakpoint ──────────────────────────────────
@@ -124,10 +126,19 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-surface text-text flex flex-col">
+      {/* ── Skip-to-content link (WCAG 2.2 AA — U-121) ──────────── */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[var(--z-tooltip)] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-contrast focus:rounded-md focus:shadow-md focus:outline-none"
+      >
+        {t("layout.skipToContent")}
+      </a>
+
       {/* ── Topbar — fixed at top ─────────────────────────────────── */}
       <Topbar
         breakpoint={bp}
         onHamburgerClick={handleHamburgerClick}
+        mobileOpen={mobileOpen}
       />
 
       {/* ── Body: sidebar + main content ──────────────────────────── */}
@@ -136,7 +147,7 @@ export function AppLayout() {
         {sideMenu}
 
         {/* Main content area */}
-        <main className="flex-1 p-4 overflow-y-auto min-w-0">
+        <main id="main-content" className="flex-1 p-4 overflow-y-auto min-w-0">
           <Outlet />
         </main>
       </div>

@@ -25,6 +25,7 @@
     "checking": "Vérification…"
   },
   "layout": {
+    "skipToContent": "Aller au contenu principal",
     "menu": {
       "expand": "Développer le menu",
       "collapse": "Réduire le menu",
@@ -112,6 +113,13 @@
     },
     "modal": {
       "close": "Fermer la modale"
+    },
+    "iconPicker": {
+      "placeholder": "Rechercher une icône…"
+    },
+    "tagEditor": {
+      "label": "Éditeur de balises",
+      "placeholder": "Saisissez du texte…"
     }
   },
   "autosave": {
@@ -119,5 +127,38 @@
     "saved": "Enregistré",
     "error": "Erreur d'enregistrement",
     "retry": "Réessayer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "identity": {
+      "title": "Identité",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "emailReadonly": "L'email ne peut pas être modifié ici."
+    },
+    "appearance": {
+      "title": "Apparence",
+      "theme": "Thème",
+      "language": "Langue"
+    },
+    "timezone": {
+      "title": "Fuseau horaire",
+      "preview": "Aperçu",
+      "currentTime": "Heure actuelle"
+    },
+    "notifications": {
+      "title": "Préférences de notification",
+      "description": "Configurez comment vous souhaitez recevoir les notifications. Aucune notification ne sera envoyée tant que le module ne sera pas activé.",
+      "event": "Événement",
+      "inApp": "Dans l'app",
+      "email": "Email",
+      "events": {
+        "comment_added": "Nouveau commentaire",
+        "mention": "Mention",
+        "task_assigned": "Tâche assignée",
+        "status_changed": "Changement de statut"
+      }
+    }
   }
 }

@@ -25,6 +25,7 @@
     "checking": "Checking…"
   },
   "layout": {
+    "skipToContent": "Skip to main content",
     "menu": {
       "expand": "Expand menu",
       "collapse": "Collapse menu",
@@ -112,6 +113,13 @@
     },
     "modal": {
       "close": "Close modal"
+    },
+    "iconPicker": {
+      "placeholder": "Search icons…"
+    },
+    "tagEditor": {
+      "label": "Tag editor",
+      "placeholder": "Type text…"
     }
   },
   "autosave": {
@@ -119,5 +127,38 @@
     "saved": "Saved",
     "error": "Save error",
     "retry": "Retry"
+  },
+  "settings": {
+    "title": "Settings",
+    "identity": {
+      "title": "Identity",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "emailReadonly": "Email cannot be changed here."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "language": "Language"
+    },
+    "timezone": {
+      "title": "Timezone",
+      "preview": "Preview",
+      "currentTime": "Current time"
+    },
+    "notifications": {
+      "title": "Notification preferences",
+      "description": "Configure how you want to receive notifications. No notifications will be sent until the module is enabled.",
+      "event": "Event",
+      "inApp": "In-app",
+      "email": "Email",
+      "events": {
+        "comment_added": "New comment",
+        "mention": "Mention",
+        "task_assigned": "Task assigned",
+        "status_changed": "Status change"
+      }
+    }
   }
 }
