@@ -52,6 +52,9 @@ class User(UUIDPKMixin, Base):
     sessions: Mapped[list[Session]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
     )
+    notification_prefs: Mapped[list[UserNotificationPref]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.email!r}>"
@@ -82,6 +85,37 @@ class Session(UUIDPKMixin, Base):
 
     def __repr__(self) -> str:
         return f"<Session {self.id!r} user={self.user_id!r}>"
+
+
+class UserNotificationPref(UUIDPKMixin, Base):
+    """Per-user, per-event notification preference (specs/01 §2 F-020..F-024).
+
+    Stores whether a given notification event type should be delivered
+    via a given channel.  This is the *preference scaffold* only — no
+    notifications are actually emitted until étape 6.
+    """
+
+    __tablename__ = "user_notification_prefs"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    module_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    channel: Mapped[str] = mapped_column(
+        String(20), nullable=False, comment="'in_app' or 'email'"
+    )
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Relationships
+    user: Mapped[User] = relationship(back_populates="notification_prefs")
+
+    def __repr__(self) -> str:
+        return (
+            f"<UserNotificationPref user={self.user_id!r} "
+            f"{self.module_key}/{self.event_type}@{self.channel} "
+            f"enabled={self.enabled}>"
+        )
 
 
 class EmailToken(UUIDPKMixin, Base):

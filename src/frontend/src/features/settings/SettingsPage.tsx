@@ -17,6 +17,7 @@ import { apiMutate } from "@/shared/api/fetch-wrapper";
 import { AutosaveField } from "@/shared/autosave/AutosaveField";
 import { Select } from "@/shared/ui/Select";
 import { Toggle } from "@/shared/ui/Toggle";
+import { useToast } from "@/shared/ui/Toast";
 import { formatDateTime } from "@/shared/datetime/format";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -118,6 +119,7 @@ export function SettingsPage() {
   const user = auth?.user;
   const { pref, setPref } = useTheme();
   const { lang, setLang } = useLanguage();
+  const { addToast } = useToast();
   const queryClient = useQueryClient();
 
   // Local state for the timezone preview clock (updated every second).
@@ -178,12 +180,13 @@ export function SettingsPage() {
     (next: string) => {
       const theme = next as ThemePref;
       setPref(theme); // Reflect instantly in Topbar (same store)
-      patchProfile({ theme }).catch(() => {
-        // Revert on failure? The store is already updated.
-        // For simplicity, keep the optimistic update.
+      patchProfile({ theme }).catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : String(err);
+        addToast("error", `${t("autosave.error")}: ${message}`);
       });
     },
-    [setPref, patchProfile],
+    [setPref, patchProfile, addToast, t],
   );
 
   // ── Language change handler ──────────────────────────────────────────────
@@ -192,18 +195,26 @@ export function SettingsPage() {
     (next: string) => {
       const locale = next as Locale;
       setLang(locale); // Reflect instantly in Topbar (same store)
-      patchProfile({ locale }).catch(() => {});
+      patchProfile({ locale }).catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : String(err);
+        addToast("error", `${t("autosave.error")}: ${message}`);
+      });
     },
-    [setLang, patchProfile],
+    [setLang, patchProfile, addToast, t],
   );
 
   // ── Timezone change handler ──────────────────────────────────────────────
 
   const handleTimezoneChange = useCallback(
     (next: string) => {
-      patchProfile({ timezone: next }).catch(() => {});
+      patchProfile({ timezone: next }).catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : String(err);
+        addToast("error", `${t("autosave.error")}: ${message}`);
+      });
     },
-    [patchProfile],
+    [patchProfile, addToast, t],
   );
 
   // ── Notification prefs query ─────────────────────────────────────────────
@@ -241,24 +252,37 @@ export function SettingsPage() {
       channel: "in_app" | "email",
       enabled: boolean,
     ) => {
-      const resp = await apiMutate("/api/v1/users/me/notification-prefs", {
-        method: "PUT",
-        body: {
-          module_key: "halo",
-          event_type: eventType,
-          channel,
-          enabled,
-        },
-      });
-      if (!resp.ok) {
-        throw new Error(`Failed to update notification preference`);
+      try {
+        const resp = await apiMutate("/api/v1/users/me/notification-prefs", {
+          method: "PUT",
+          body: {
+            module_key: "halo",
+            event_type: eventType,
+            channel,
+            enabled,
+          },
+        });
+        if (!resp.ok) {
+          const body = await resp.json().catch(() => ({}));
+          const detail = (body as { detail?: { message?: string } }).detail;
+          const message = detail?.message ?? `HTTP ${resp.status}`;
+          throw new Error(message);
+        }
+        // Invalidate the prefs query
+        queryClient.invalidateQueries({
+          queryKey: ["users", "me", "notification-prefs"],
+        });
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : String(err);
+        addToast("error", `${t("autosave.error")}: ${message}`);
+        // Re-invalidate to resync the toggle state with the server
+        queryClient.invalidateQueries({
+          queryKey: ["users", "me", "notification-prefs"],
+        });
       }
-      // Invalidate the prefs query
-      queryClient.invalidateQueries({
-        queryKey: ["users", "me", "notification-prefs"],
-      });
     },
-    [queryClient],
+    [queryClient, addToast, t],
   );
 
   // ── Loading / unauthenticated states ─────────────────────────────────────
@@ -381,7 +405,7 @@ export function SettingsPage() {
 
         <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
           <Select
-            label="IANA"
+            label={t("settings.timezone.label")}
             value={effectiveTz}
             onChange={handleTimezoneChange}
             options={tzOptions}

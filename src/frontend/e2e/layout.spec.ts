@@ -307,10 +307,11 @@ test.describe("Accessibility", () => {
     await expect(mainContent).toBeAttached();
   });
 
-  test("modal focus trap works with keyboard navigation", async ({ page }) => {
-    // This test verifies the modal infrastructure is in place.
-    // An actual modal trigger requires modules (étape 4+), but the ModalHost
-    // component renders. We verify ModalHost doesn't crash the layout.
+  test("layout renders without errors (ModalHost + Footer visible)", async ({ page }) => {
+    // The ModalHost component is rendered as part of the AppLayout.
+    // An actual modal trigger requires modules (étape 4+), but we verify
+    // the shell renders without crashing. The real focus-trap behaviour
+    // is covered by unit tests (modal.test.tsx).
     await page.goto("/");
     await waitForApp(page);
 

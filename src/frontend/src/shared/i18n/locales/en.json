@@ -144,6 +144,7 @@
     },
     "timezone": {
       "title": "Timezone",
+      "label": "IANA",
       "preview": "Preview",
       "currentTime": "Current time"
     },

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { useRouter, useSearch } from "@tanstack/react-router";
 
 /**
@@ -17,7 +17,11 @@ export function useRoutedModal() {
   const search = useSearch({ strict: false }) as { modal?: string[] };
   const router = useRouter();
 
-  const modalStack: string[] = search.modal ?? [];
+  // Memoize to avoid new array references on every render (react-hooks/exhaustive-deps).
+  const modalStack: string[] = useMemo(
+    () => search.modal ?? [],
+    [search.modal],
+  );
 
   // Keep a ref to the latest modalStack so the callbacks below are stable
   // (they don't need to list modalStack in their deps).

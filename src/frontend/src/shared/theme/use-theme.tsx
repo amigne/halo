@@ -57,7 +57,14 @@ function readStoredPref(): ThemePref {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [pref, setPrefState] = useState<ThemePref>(readStoredPref);
 
-  const resolved = resolveTheme(pref);
+  // Track the system resolved theme separately so that OS-level changes
+  // trigger a React re-render (not just a DOM update).
+  const [systemResolved, setSystemResolved] = useState<ResolvedTheme>(() =>
+    resolveTheme("system"),
+  );
+
+  const resolved: ResolvedTheme =
+    pref === "system" ? systemResolved : (pref as ResolvedTheme);
 
   const setPref = useCallback((next: ThemePref) => {
     setPrefState(next);
@@ -74,7 +81,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (pref !== "system") return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = () => {
-      applyTheme(resolveTheme("system"));
+      const next = resolveTheme("system");
+      setSystemResolved(next);
     };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);

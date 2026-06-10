@@ -144,6 +144,7 @@
     },
     "timezone": {
       "title": "Fuseau horaire",
+      "label": "IANA",
       "preview": "Aperçu",
       "currentTime": "Heure actuelle"
     },

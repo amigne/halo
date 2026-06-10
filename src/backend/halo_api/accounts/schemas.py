@@ -66,6 +66,41 @@ class AuthStatus(BaseModel):
     user: UserResponse | None = None
 
 
+class UserUpdateRequest(BaseModel):
+    """Partial update for the current user profile (F-022).
+
+    All fields are optional — only the provided fields are updated.
+    """
+
+    first_name: str | None = Field(default=None, min_length=1, max_length=100)
+    last_name: str | None = Field(default=None, min_length=1, max_length=100)
+    theme: str | None = Field(default=None, pattern=r"^(light|dark|system)$")
+    locale: str | None = Field(default=None, pattern=r"^(fr|en)$")
+    timezone: str | None = Field(default=None, min_length=1, max_length=50)
+
+
+class NotificationPrefRequest(BaseModel):
+    """Upsert a single notification preference entry (F-024)."""
+
+    module_key: str = Field(min_length=1, max_length=64)
+    event_type: str = Field(min_length=1, max_length=64)
+    channel: str = Field(pattern=r"^(in_app|email)$")
+    enabled: bool = True
+
+
+class NotificationPrefResponse(BaseModel):
+    """Notification preference record returned by the API."""
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    module_key: str
+    event_type: str
+    channel: str
+    enabled: bool
+
+    model_config = {"from_attributes": True}
+
+
 class MessageResponse(BaseModel):
     """Generic message response (anti-enumeration uniform shape)."""
 

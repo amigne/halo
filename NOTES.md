@@ -56,10 +56,9 @@ cd src/frontend
 npx playwright test
 ```
 Le `webServer` configuré dans `playwright.config.ts` démarre automatiquement
-Vite sur le port 5173. Pour utiliser un serveur déjà lancé :
-```bash
-npx playwright test --ignore-url
-```
+Vite sur le port 5173. Le `reuseExistingServer: true` (hors CI) évite de
+relancer un serveur déjà actif — aucune option CLI supplémentaire n'est
+nécessaire.
 Ou depuis la racine du projet avec Docker Compose :
 ```bash
 docker compose -f docker-compose.dev.yml up -d
