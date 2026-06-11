@@ -9,6 +9,7 @@ from fastapi.routing import APIRouter
 from starlette.responses import JSONResponse
 
 from halo_api.accounts.router import router as accounts_router
+from halo_api.accounts.users import router as users_router
 from halo_api.core.config import settings
 from halo_api.core.csrf import CSRFCustomHeaderMiddleware
 from halo_api.core.db import check_db, engine
@@ -72,4 +73,5 @@ async def ready() -> JSONResponse:
 # ── Mount routers ────────────────────────────────────────────────────────────
 
 v1_router.include_router(accounts_router)
+v1_router.include_router(users_router)
 app.include_router(v1_router)

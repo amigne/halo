@@ -23,7 +23,7 @@ export function HomePage() {
 
           {healthQuery.isLoading && (
             <span className="flex items-center gap-2 text-foreground-muted">
-              <Spinner size="sm" label={t("app.loading")} />
+              <Spinner size="sm" />
               {t("health.checking")}
             </span>
           )}

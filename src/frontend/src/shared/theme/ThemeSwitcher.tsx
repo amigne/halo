@@ -1,15 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/ui/Button";
-import { type Theme, useTheme } from "@/shared/theme/use-theme";
+import { type ThemePref, useTheme } from "@/shared/theme/use-theme";
 
-const THEMES: { key: Theme; labelKey: string }[] = [
+const THEMES: { key: ThemePref; labelKey: string }[] = [
   { key: "light", labelKey: "theme.light" },
   { key: "dark", labelKey: "theme.dark" },
   { key: "system", labelKey: "theme.system" },
 ];
 
 export function ThemeSwitcher() {
-  const { theme, setTheme } = useTheme();
+  const { pref, setPref } = useTheme();
   const { t } = useTranslation();
 
   return (
@@ -17,10 +17,10 @@ export function ThemeSwitcher() {
       {THEMES.map(({ key, labelKey }) => (
         <Button
           key={key}
-          variant={theme === key ? "primary" : "ghost"}
+          variant={pref === key ? "primary" : "ghost"}
           size="sm"
-          onClick={() => setTheme(key)}
-          aria-pressed={theme === key}
+          onClick={() => setPref(key)}
+          aria-pressed={pref === key}
         >
           {t(labelKey)}
         </Button>

@@ -1,8 +1,7 @@
 import { type ReactNode } from "react";
 import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, beforeEach, vi } from "vitest";
-import { ThemeProvider } from "@/shared/theme/store";
-import { useTheme } from "@/shared/theme/use-theme";
+import { ThemeProvider, useTheme } from "@/shared/theme/use-theme";
 
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
@@ -38,16 +37,16 @@ describe("Theme store", () => {
     const { result } = renderHook(() => useTheme(), {
       wrapper: createWrapper(),
     });
-    expect(result.current.theme).toBe("system");
+    expect(result.current.pref).toBe("system");
   });
 
   it("reads stored theme preference from localStorage", () => {
-    localStorageMock.setItem("halo-theme", "dark");
+    localStorageMock.setItem("halo.theme", "dark");
 
     const { result } = renderHook(() => useTheme(), {
       wrapper: createWrapper(),
     });
-    expect(result.current.theme).toBe("dark");
+    expect(result.current.pref).toBe("dark");
   });
 
   it("changes theme and persists to localStorage", () => {
@@ -57,10 +56,10 @@ describe("Theme store", () => {
     });
 
     act(() => {
-      result.current.setTheme("dark");
+      result.current.setPref("dark");
     });
-    expect(result.current.theme).toBe("dark");
-    expect(localStorageMock.setItem).toHaveBeenCalledWith("halo-theme", "dark");
+    expect(result.current.pref).toBe("dark");
+    expect(localStorageMock.setItem).toHaveBeenCalledWith("halo.theme", "dark");
   });
 
   it("cycles through light, dark, and system themes", () => {
@@ -70,19 +69,19 @@ describe("Theme store", () => {
     });
 
     act(() => {
-      result.current.setTheme("light");
+      result.current.setPref("light");
     });
-    expect(result.current.theme).toBe("light");
+    expect(result.current.pref).toBe("light");
 
     act(() => {
-      result.current.setTheme("dark");
+      result.current.setPref("dark");
     });
-    expect(result.current.theme).toBe("dark");
+    expect(result.current.pref).toBe("dark");
 
     act(() => {
-      result.current.setTheme("system");
+      result.current.setPref("system");
     });
-    expect(result.current.theme).toBe("system");
+    expect(result.current.pref).toBe("system");
   });
 
   it("resolves system theme to light when prefers-color-scheme is light", () => {
@@ -90,13 +89,13 @@ describe("Theme store", () => {
       wrapper: createWrapper(),
     });
 
-    expect(result.current.theme).toBe("system");
+    expect(result.current.pref).toBe("system");
     // Global jsdom mock returns matches: false → light mode
     expect(result.current.resolved).toBe("light");
   });
 
   it("resolves stored dark theme correctly", () => {
-    localStorageMock.setItem("halo-theme", "dark");
+    localStorageMock.setItem("halo.theme", "dark");
 
     const { result } = renderHook(() => useTheme(), {
       wrapper: createWrapper(),

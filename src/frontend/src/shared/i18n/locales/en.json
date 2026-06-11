@@ -24,6 +24,29 @@
     "error": "Error",
     "checking": "Checking…"
   },
+  "layout": {
+    "skipToContent": "Skip to main content",
+    "menu": {
+      "expand": "Expand menu",
+      "collapse": "Collapse menu",
+      "modules": "Modules",
+      "admin": "Administration",
+      "close": "Close menu"
+    },
+    "topbar": {
+      "logoAriaLabel": "Back to home",
+      "notifications": "Notifications",
+      "userMenu": {
+        "profile": "Profile",
+        "logout": "Logout"
+      }
+    },
+    "footer": {
+      "copyright": "Halo — MIT License",
+      "privacy": "Privacy",
+      "privacyUrl": "/privacy"
+    }
+  },
   "auth": {
     "login": "Login",
     "register": "Register",
@@ -54,5 +77,89 @@
     "fieldRequired": "This field is required",
     "passwordMinLength": "Minimum 8 characters",
     "passwordMismatch": "Passwords do not match"
+  },
+  "demo": {
+    "greeting": "Hello {{name}}!",
+    "inbox": "You have {{count}} unread message",
+    "inbox_other": "You have {{count}} unread messages"
+  },
+  "ui": {
+    "spinner": { "loading": "Loading…" },
+    "button": { "loading": "Loading" },
+    "input": { "error": "Error" },
+    "select": { "placeholder": "Select…" },
+    "toast": {
+      "close": "Close",
+      "error": "Error",
+      "success": "Success",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "tooltip": { "close": "Close" },
+    "toggle": { "on": "On", "off": "Off" },
+    "table": {
+      "noData": "No data",
+      "sortAsc": "Sort ascending",
+      "sortDesc": "Sort descending"
+    },
+    "tabs": { "tab": "Tab" },
+    "dateTimePicker": {
+      "selectDate": "Select date",
+      "selectTime": "Select time"
+    },
+    "emptyState": {
+      "noResults": "No results",
+      "defaultDescription": "There is nothing to display at the moment."
+    },
+    "modal": {
+      "close": "Close modal"
+    },
+    "iconPicker": {
+      "placeholder": "Search icons…"
+    },
+    "tagEditor": {
+      "label": "Tag editor",
+      "placeholder": "Type text…"
+    }
+  },
+  "autosave": {
+    "saving": "Saving…",
+    "saved": "Saved",
+    "error": "Save error",
+    "retry": "Retry"
+  },
+  "settings": {
+    "title": "Settings",
+    "identity": {
+      "title": "Identity",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "emailReadonly": "Email cannot be changed here."
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "language": "Language"
+    },
+    "timezone": {
+      "title": "Timezone",
+      "label": "IANA",
+      "preview": "Preview",
+      "currentTime": "Current time"
+    },
+    "notifications": {
+      "title": "Notification preferences",
+      "description": "Configure how you want to receive notifications. No notifications will be sent until the module is enabled.",
+      "event": "Event",
+      "inApp": "In-app",
+      "email": "Email",
+      "events": {
+        "comment_added": "New comment",
+        "mention": "Mention",
+        "task_assigned": "Task assigned",
+        "status_changed": "Status change"
+      }
+    }
   }
 }

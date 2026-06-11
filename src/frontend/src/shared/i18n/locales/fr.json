@@ -24,6 +24,29 @@
     "error": "Erreur",
     "checking": "Vérification…"
   },
+  "layout": {
+    "skipToContent": "Aller au contenu principal",
+    "menu": {
+      "expand": "Développer le menu",
+      "collapse": "Réduire le menu",
+      "modules": "Modules",
+      "admin": "Administration",
+      "close": "Fermer le menu"
+    },
+    "topbar": {
+      "logoAriaLabel": "Retour à l'accueil",
+      "notifications": "Notifications",
+      "userMenu": {
+        "profile": "Profil",
+        "logout": "Déconnexion"
+      }
+    },
+    "footer": {
+      "copyright": "Halo — Licence MIT",
+      "privacy": "Confidentialité",
+      "privacyUrl": "/privacy"
+    }
+  },
   "auth": {
     "login": "Connexion",
     "register": "Inscription",
@@ -54,5 +77,89 @@
     "fieldRequired": "Ce champ est requis",
     "passwordMinLength": "8 caractères minimum",
     "passwordMismatch": "Les mots de passe ne correspondent pas"
+  },
+  "demo": {
+    "greeting": "Bonjour {{name}} !",
+    "inbox": "Vous avez {{count}} message non lu",
+    "inbox_other": "Vous avez {{count}} messages non lus"
+  },
+  "ui": {
+    "spinner": { "loading": "Chargement…" },
+    "button": { "loading": "Chargement en cours" },
+    "input": { "error": "Erreur" },
+    "select": { "placeholder": "Sélectionner…" },
+    "toast": {
+      "close": "Fermer",
+      "error": "Erreur",
+      "success": "Succès",
+      "warning": "Attention",
+      "info": "Information"
+    },
+    "tooltip": { "close": "Fermer" },
+    "toggle": { "on": "Activé", "off": "Désactivé" },
+    "table": {
+      "noData": "Aucune donnée",
+      "sortAsc": "Tri croissant",
+      "sortDesc": "Tri décroissant"
+    },
+    "tabs": { "tab": "Onglet" },
+    "dateTimePicker": {
+      "selectDate": "Sélectionner une date",
+      "selectTime": "Sélectionner une heure"
+    },
+    "emptyState": {
+      "noResults": "Aucun résultat",
+      "defaultDescription": "Il n'y a rien à afficher pour le moment."
+    },
+    "modal": {
+      "close": "Fermer la modale"
+    },
+    "iconPicker": {
+      "placeholder": "Rechercher une icône…"
+    },
+    "tagEditor": {
+      "label": "Éditeur de balises",
+      "placeholder": "Saisissez du texte…"
+    }
+  },
+  "autosave": {
+    "saving": "Enregistrement…",
+    "saved": "Enregistré",
+    "error": "Erreur d'enregistrement",
+    "retry": "Réessayer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "identity": {
+      "title": "Identité",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "emailReadonly": "L'email ne peut pas être modifié ici."
+    },
+    "appearance": {
+      "title": "Apparence",
+      "theme": "Thème",
+      "language": "Langue"
+    },
+    "timezone": {
+      "title": "Fuseau horaire",
+      "label": "IANA",
+      "preview": "Aperçu",
+      "currentTime": "Heure actuelle"
+    },
+    "notifications": {
+      "title": "Préférences de notification",
+      "description": "Configurez comment vous souhaitez recevoir les notifications. Aucune notification ne sera envoyée tant que le module ne sera pas activé.",
+      "event": "Événement",
+      "inApp": "Dans l'app",
+      "email": "Email",
+      "events": {
+        "comment_added": "Nouveau commentaire",
+        "mention": "Mention",
+        "task_assigned": "Tâche assignée",
+        "status_changed": "Changement de statut"
+      }
+    }
   }
 }
