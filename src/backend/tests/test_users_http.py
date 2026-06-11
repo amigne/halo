@@ -244,6 +244,37 @@ async def test_patch_invalid_locale(http_client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_patch_timezone_utc_accepted(http_client: AsyncClient) -> None:
+    """PATCH with timezone='UTC' is accepted (zoneinfo-based validation)."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+
+    r = await _csrf_patch(
+        http_client,
+        "/api/v1/users/me",
+        csrf,
+        json={"timezone": "UTC"},
+    )
+    assert r.status_code == 200
+    assert r.json()["timezone"] == "UTC"
+
+
+@pytest.mark.asyncio
+async def test_patch_timezone_invalid_zone(http_client: AsyncClient) -> None:
+    """PATCH with non-existent timezone returns 422."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+
+    r = await _csrf_patch(
+        http_client,
+        "/api/v1/users/me",
+        csrf,
+        json={"timezone": "Invalid/Zone"},
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_patch_invalid_timezone(http_client: AsyncClient) -> None:
     """PATCH with invalid timezone returns 422."""
     await _register_and_login(http_client)

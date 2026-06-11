@@ -5,6 +5,7 @@ Protected by ``get_current_user`` and CSRF on mutating operations.
 
 import logging
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 import sqlalchemy as sa
 from fastapi import APIRouter, Depends, HTTPException
@@ -29,24 +30,18 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 def _validate_timezone(tz: str) -> bool:
-    """Return True if *tz* looks like a valid IANA timezone name.
+    """Return True if *tz* is a valid IANA timezone name.
 
-    Accepts the names returned by Intl.DateTimeFormat().resolvedOptions().timeZone,
-    which are always valid IANA identifiers (e.g. "Europe/Paris", "America/New_York").
-    We accept a broad pattern: Area/Location with optional subdivisions.
+    Uses the stdlib ``zoneinfo`` database, which delegates to the OS IANA
+    database (tzdata).  Accepts canonical names like ``UTC``, ``Europe/Paris``,
+    ``America/New_York``, etc.
     """
     if not tz or len(tz) > 50:
         return False
-    # IANA timezone names are ASCII letters, digits, slash, underscore, hyphen, plus.
-    # Pattern: at least one slash, reasonable characters.
-    parts = tz.split("/")
-    if len(parts) < 2:
+    try:
+        ZoneInfo(tz)
+    except KeyError, ValueError:
         return False
-    for part in parts:
-        if not part:
-            return False
-        if not all(c.isascii() and (c.isalnum() or c in "_-+") for c in part):
-            return False
     return True
 
 
@@ -79,24 +74,10 @@ async def update_profile(
     if body.last_name is not None:
         updates["last_name"] = body.last_name.strip()
     if body.theme is not None:
-        if body.theme not in {"light", "dark", "system"}:
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "code": "VALIDATION_ERROR",
-                    "message": "theme must be one of: light, dark, system",
-                },
-            )
+        # Validated by Pydantic pattern ^(light|dark|system)$
         updates["theme"] = body.theme
     if body.locale is not None:
-        if body.locale not in {"fr", "en"}:
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "code": "VALIDATION_ERROR",
-                    "message": "locale must be one of: fr, en",
-                },
-            )
+        # Validated by Pydantic pattern ^(fr|en)$
         updates["locale"] = body.locale
     if body.timezone is not None:
         if not _validate_timezone(body.timezone):
