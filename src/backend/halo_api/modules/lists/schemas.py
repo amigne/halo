@@ -91,3 +91,53 @@ class ListResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── ListItem schemas ────────────────────────────────────────────────────────
+
+
+class ListItemCreate(BaseModel):
+    """Payload for creating a list item (F-115)."""
+
+    title: str = Field(min_length=1)
+    description: str | None = None
+    is_done: bool = False
+    priority: int | None = Field(default=None, ge=0)
+    due_at: datetime | None = None
+    notify_before: int | None = Field(default=None, ge=0)
+    position: int = 0
+
+
+class ListItemUpdate(BaseModel):
+    """Partial update for a list item (F-115).
+
+    Only the non-None fields are applied.  ``id``, ``list_id``,
+    ``created_at``, and ``updated_at`` are immutable.
+    """
+
+    title: str | None = Field(default=None, min_length=1)
+    description: str | None = None
+    is_done: bool | None = None
+    priority: int | None = Field(default=None, ge=0)
+    due_at: datetime | None = None
+    notify_before: int | None = Field(default=None, ge=0)
+    position: int | None = Field(default=None, ge=0)
+
+
+class ListItemResponse(BaseModel):
+    """Public list-item representation returned by the API."""
+
+    id: uuid.UUID
+    list_id: uuid.UUID
+    title: str
+    description: str | None
+    is_done: bool
+    priority: int | None
+    due_at: datetime | None
+    notify_before: int | None
+    assignee_user_id: uuid.UUID | None
+    position: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}

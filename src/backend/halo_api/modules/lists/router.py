@@ -14,9 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from halo_api.accounts.deps import get_current_user
 from halo_api.accounts.models import User
 from halo_api.core.db import get_session
-from halo_api.modules.lists.models import List
+from halo_api.modules.lists.models import List, ListItem
 from halo_api.modules.lists.schemas import (
     ListCreate,
+    ListItemCreate,
+    ListItemResponse,
+    ListItemUpdate,
     ListResponse,
     ListUpdate,
     get_preset_field_schema,
@@ -183,6 +186,167 @@ async def delete_list(
         "List deleted: ref_no=%d title=%r user=%s",
         lst.ref_no,
         lst.title,
+        user.id,
+    )
+    return Response(status_code=204)
+
+
+# ── List Item Endpoints (F-115) ────────────────────────────────────────────
+
+
+async def _get_owned_item(
+    list_id: uuid.UUID,
+    item_id: uuid.UUID,
+    user: User,
+    db: AsyncSession,
+) -> tuple[List, ListItem]:
+    """Fetch a list item by UUID, verifying parent list ownership.
+
+    Returns the (list, item) tuple.  Raises 404 if the list is not
+    found/owned or if the item does not belong to that list.
+    """
+    lst = await _get_owned_list(list_id, user, db)
+
+    result = await db.execute(
+        sa.select(ListItem).where(
+            ListItem.id == item_id,
+            ListItem.list_id == list_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+
+    if item is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "NOT_FOUND", "message": "List item not found"},
+        )
+
+    return lst, item
+
+
+@router.post("/{list_id}/items", response_model=ListItemResponse, status_code=201)
+async def create_item(
+    list_id: uuid.UUID,
+    body: ListItemCreate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+) -> ListItemResponse:
+    """Create a new item in a list (F-115).
+
+    Returns 404 when *list_id* is not found or not owned by the current user.
+    """
+    lst = await _get_owned_list(list_id, user, db)
+
+    item = ListItem(
+        list_id=lst.id,
+        title=body.title,
+        description=body.description,
+        is_done=body.is_done,
+        priority=body.priority,
+        due_at=body.due_at,
+        notify_before=body.notify_before,
+        position=body.position,
+    )
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+
+    logger.info(
+        "Item created: title=%r list_id=%s user=%s",
+        body.title,
+        list_id,
+        user.id,
+    )
+    return ListItemResponse.model_validate(item)
+
+
+@router.get("/{list_id}/items", response_model=list[ListItemResponse])
+async def list_items(
+    list_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+) -> list[ListItemResponse]:
+    """Return all items in a list, ordered by position (F-115).
+
+    Returns 404 when *list_id* is not found or not owned by the current user.
+    """
+    lst = await _get_owned_list(list_id, user, db)
+
+    result = await db.execute(
+        sa.select(ListItem)
+        .where(ListItem.list_id == lst.id)
+        .order_by(ListItem.position, ListItem.created_at)
+    )
+    items = result.scalars().all()
+    return [ListItemResponse.model_validate(item) for item in items]
+
+
+@router.patch("/{list_id}/items/{item_id}", response_model=ListItemResponse)
+async def update_item(
+    list_id: uuid.UUID,
+    item_id: uuid.UUID,
+    body: ListItemUpdate,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+) -> ListItemResponse:
+    """Partially update a list item (F-115).
+
+    Only the non-None fields in *body* are applied.  ``id``, ``list_id``,
+    and timestamps are **never** modified.
+
+    Returns 404 when the list or item is not found/owned.
+    """
+    _lst, item = await _get_owned_item(list_id, item_id, user, db)
+
+    updated = False
+    if body.title is not None:
+        item.title = body.title
+        updated = True
+    if body.description is not None:
+        item.description = body.description
+        updated = True
+    if body.is_done is not None:
+        item.is_done = body.is_done
+        updated = True
+    if body.priority is not None:
+        item.priority = body.priority
+        updated = True
+    if body.due_at is not None:
+        item.due_at = body.due_at
+        updated = True
+    if body.notify_before is not None:
+        item.notify_before = body.notify_before
+        updated = True
+    if body.position is not None:
+        item.position = body.position
+        updated = True
+
+    if updated:
+        await db.commit()
+        await db.refresh(item)
+
+    return ListItemResponse.model_validate(item)
+
+
+@router.delete("/{list_id}/items/{item_id}", status_code=204)
+async def delete_item(
+    list_id: uuid.UUID,
+    item_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+) -> Response:
+    """Delete a list item (F-115).
+
+    Returns 404 when the list or item is not found/owned.
+    """
+    _lst, item = await _get_owned_item(list_id, item_id, user, db)
+    await db.delete(item)
+    await db.commit()
+
+    logger.info(
+        "Item deleted: item_id=%s list_id=%s user=%s",
+        item_id,
+        list_id,
         user.id,
     )
     return Response(status_code=204)
