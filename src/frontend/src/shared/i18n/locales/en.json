@@ -122,6 +122,78 @@
       "placeholder": "Type text…"
     }
   },
+  "modules": {
+    "lists": "Lists"
+  },
+  "lists": {
+    "title": "Lists",
+    "create": "Create list",
+    "empty": {
+      "title": "No lists yet",
+      "description": "Create your first list to start organizing tasks, checklists, and ideas."
+    },
+    "type": {
+      "tasks": "Tasks",
+      "checklist": "Checklist",
+      "ideas": "Ideas",
+      "custom": "Custom"
+    },
+    "createModal": {
+      "title": "Create list",
+      "typeLabel": "Type",
+      "titleLabel": "Title",
+      "titlePlaceholder": "My list…",
+      "iconLabel": "Icon",
+      "advancedTitle": "Custom fields",
+      "fieldTitle": "Title",
+      "fieldDescription": "Description",
+      "fieldPriority": "Priority",
+      "fieldDueAt": "Due date",
+      "fieldNotifyBefore": "Reminder",
+      "fieldAssignee": "Assignee",
+      "fieldIsDone": "Done status",
+      "submit": "Create",
+      "success": "List created successfully"
+    },
+    "detailModal": {
+      "title": "List details",
+      "items": "{{count}} item(s)",
+      "delete": "Delete list",
+      "deleteConfirm": "Are you sure?",
+      "deleteConfirmYes": "Yes, delete",
+      "deleteConfirmNo": "Cancel",
+      "deleted": "List deleted",
+      "addItem": "Add item",
+      "noItems": "No items yet",
+      "noItemsHint": "Add your first item to this list."
+    },
+    "item": {
+      "title": "Title",
+      "titlePlaceholder": "Item title…",
+      "description": "Description",
+      "descriptionPlaceholder": "Description…",
+      "priority": "Priority",
+      "priorityLow": "Low",
+      "priorityMedium": "Medium",
+      "priorityHigh": "High",
+      "priorityUrgent": "Urgent",
+      "dueAt": "Due date",
+      "notifyBefore": "Reminder (min)",
+      "assignee": "Assignee",
+      "delete": "Delete item",
+      "done": "Mark done",
+      "newItemTitle": "New item"
+    },
+    "error": {
+      "fetch": "Failed to load lists",
+      "create": "Failed to create",
+      "update": "Failed to save",
+      "delete": "Failed to delete",
+      "invalidId": "Invalid list ID",
+      "notFound": "List not found",
+      "retry": "Retry"
+    }
+  },
   "autosave": {
     "saving": "Saving…",
     "saved": "Saved",

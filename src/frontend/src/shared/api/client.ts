@@ -44,10 +44,734 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/csrf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Csrf Token
+         * @description Emit a ``csrf_token`` cookie and return the token value.
+         *
+         *     The frontend calls this on app load (and before any POST) to obtain a
+         *     CSRF token.  The cookie is ``HttpOnly=False`` so JavaScript can read it
+         *     and send it back as ``X-CSRF-Token`` on mutating requests.
+         */
+        get: operations["csrf_token_api_v1_auth_csrf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register
+         * @description Register a new user account.
+         *
+         *     The response is the **same** whether the email already exists or not
+         *     (anti-enumeration, T-083).  A verification email is only sent for new
+         *     accounts.
+         */
+        post: operations["register_api_v1_auth_register_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verify Email Get
+         * @description Inspect a verification token (GET — does NOT consume it).
+         *
+         *     Email scanners / link prefetchers cannot burn the token this way.
+         *     The frontend sends a POST to actually confirm verification.
+         */
+        get: operations["verify_email_get_api_v1_auth_verify_email_get"];
+        put?: never;
+        /**
+         * Verify Email Post
+         * @description Confirm email verification (POST — consumes the token).
+         *
+         *     Marks the token as used and sets ``is_verified=True`` on the user.
+         *     The token is single-use and has a limited lifetime (T-081, T-082).
+         */
+        post: operations["verify_email_post_api_v1_auth_verify_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login
+         * @description Authenticate with email + password, create a session cookie (T-070).
+         *
+         *     Anti-enumeration (T-083): returns the same error for unknown email and
+         *     wrong password.
+         */
+        post: operations["login_api_v1_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description Invalidate the current session (server-side) and clear the cookie.
+         */
+        post: operations["logout_api_v1_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Me
+         * @description Return the currently authenticated user, or {authenticated: false}.
+         */
+        get: operations["me_api_v1_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Forgot Password
+         * @description Request a password reset email.
+         *
+         *     Anti-enumeration (T-083): always returns the same message, regardless
+         *     of whether the email exists.  If the email is not found, the request
+         *     is silently dropped.
+         */
+        post: operations["forgot_password_api_v1_auth_forgot_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Password
+         * @description Reset the password using a CSPRNG token.
+         *
+         *     The token is single-use and has a limited lifetime (T-081, T-082).
+         */
+        post: operations["reset_password_api_v1_auth_reset_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Profile
+         * @description Return the current user's profile (F-020).
+         */
+        get: operations["get_profile_api_v1_users_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Profile
+         * @description Partially update the current user's profile (F-021, F-022).
+         *
+         *     Only the non-None fields in *body* are applied.  Validates theme,
+         *     locale, and timezone values.
+         */
+        patch: operations["update_profile_api_v1_users_me_patch"];
+        trace?: never;
+    };
+    "/api/v1/users/me/notification-prefs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Notification Prefs
+         * @description Return all notification preferences for the current user (F-023).
+         */
+        get: operations["list_notification_prefs_api_v1_users_me_notification_prefs_get"];
+        /**
+         * Upsert Notification Pref
+         * @description Upsert a single notification preference entry (F-024).
+         *
+         *     If a preference for the same (user_id, module_key, event_type, channel)
+         *     already exists, its ``enabled`` flag is updated.  Otherwise a new
+         *     preference is created.  The operation is idempotent.
+         */
+        put: operations["upsert_notification_pref_api_v1_users_me_notification_prefs_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modules/lists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Lists
+         * @description Return all lists owned by the current user (F-112).
+         */
+        get: operations["list_lists_api_v1_modules_lists_get"];
+        put?: never;
+        /**
+         * Create List
+         * @description Create a new list with atomic ``ref_no`` allocation (F-111).
+         *
+         *     ``ref_no`` is allocated atomically via ``allocate_ref_no`` in the
+         *     same transaction as the INSERT.  When *field_schema* is omitted the
+         *     preset for *list_type* is applied.
+         */
+        post: operations["create_list_api_v1_modules_lists_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modules/lists/{list_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get List
+         * @description Return a single list owned by the current user (F-112).
+         *
+         *     Returns 404 (not 403) when the list belongs to another user —
+         *     information hiding.
+         */
+        get: operations["get_list_api_v1_modules_lists__list_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete List
+         * @description Delete a list and its items (F-114).
+         *
+         *     Cascade is handled by the FK constraint (``ON DELETE CASCADE``).
+         *     ``ref_no`` is **never** re-assigned.
+         */
+        delete: operations["delete_list_api_v1_modules_lists__list_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update List
+         * @description Partially update a list (F-113).
+         *
+         *     Only the non-None fields in *body* are applied.  ``ref_no``,
+         *     ``list_type``, and owner fields are **never** modified.
+         */
+        patch: operations["update_list_api_v1_modules_lists__list_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/modules/lists/{list_id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Items
+         * @description Return all items in a list, ordered by position (F-115).
+         *
+         *     Returns 404 when *list_id* is not found or not owned by the current user.
+         */
+        get: operations["list_items_api_v1_modules_lists__list_id__items_get"];
+        put?: never;
+        /**
+         * Create Item
+         * @description Create a new item in a list (F-115).
+         *
+         *     Returns 404 when *list_id* is not found or not owned by the current user.
+         */
+        post: operations["create_item_api_v1_modules_lists__list_id__items_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/modules/lists/{list_id}/items/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Item
+         * @description Delete a list item (F-115).
+         *
+         *     Returns 404 when the list or item is not found/owned.
+         */
+        delete: operations["delete_item_api_v1_modules_lists__list_id__items__item_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Item
+         * @description Partially update a list item (F-115).
+         *
+         *     Only the non-None fields in *body* are applied.  ``id``, ``list_id``,
+         *     and timestamps are **never** modified.
+         *
+         *     Returns 404 when the list or item is not found/owned.
+         */
+        patch: operations["update_item_api_v1_modules_lists__list_id__items__item_id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /**
+         * AuthStatus
+         * @description Current authentication status (/auth/me).
+         */
+        AuthStatus: {
+            /** Authenticated */
+            authenticated: boolean;
+            user?: components["schemas"]["UserResponse"] | null;
+        };
+        /**
+         * ForgotPasswordRequest
+         * @description Forgot-password payload (email only — anti-enumeration, T-083).
+         */
+        ForgotPasswordRequest: {
+            /** Email */
+            email: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * ListCreate
+         * @description Payload for creating a list (F-111).
+         */
+        ListCreate: {
+            /** Title */
+            title: string;
+            /**
+             * List Type
+             * @default custom
+             */
+            list_type: string;
+            /** Icon */
+            icon?: string | null;
+            /** Field Schema */
+            field_schema?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * ListItemCreate
+         * @description Payload for creating a list item (F-115).
+         */
+        ListItemCreate: {
+            /** Title */
+            title: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Is Done
+             * @default false
+             */
+            is_done: boolean;
+            /** Priority */
+            priority?: number | null;
+            /** Due At */
+            due_at?: string | null;
+            /** Notify Before */
+            notify_before?: number | null;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+        };
+        /**
+         * ListItemResponse
+         * @description Public list-item representation returned by the API.
+         */
+        ListItemResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * List Id
+             * Format: uuid
+             */
+            list_id: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string | null;
+            /** Is Done */
+            is_done: boolean;
+            /** Priority */
+            priority: number | null;
+            /** Due At */
+            due_at: string | null;
+            /** Notify Before */
+            notify_before: number | null;
+            /** Assignee User Id */
+            assignee_user_id: string | null;
+            /** Position */
+            position: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ListItemUpdate
+         * @description Partial update for a list item (F-115).
+         *
+         *     Only the non-None fields are applied.  ``id``, ``list_id``,
+         *     ``created_at``, and ``updated_at`` are immutable.
+         */
+        ListItemUpdate: {
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Is Done */
+            is_done?: boolean | null;
+            /** Priority */
+            priority?: number | null;
+            /** Due At */
+            due_at?: string | null;
+            /** Notify Before */
+            notify_before?: number | null;
+            /** Position */
+            position?: number | null;
+        };
+        /**
+         * ListResponse
+         * @description Public list representation returned by the API.
+         */
+        ListResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref No */
+            ref_no: number;
+            /** Owner Context */
+            owner_context: string;
+            /**
+             * Owner User Id
+             * Format: uuid
+             */
+            owner_user_id: string;
+            /** Group Id */
+            group_id: string | null;
+            /** Title */
+            title: string;
+            /** Icon */
+            icon: string | null;
+            /** List Type */
+            list_type: string;
+            /** Field Schema */
+            field_schema: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * ListUpdate
+         * @description Partial update for a list (F-113).
+         *
+         *     Only the non-None fields are applied.  ``ref_no``, ``list_type`` and
+         *     owner fields are immutable and ignored.
+         */
+        ListUpdate: {
+            /** Title */
+            title?: string | null;
+            /** Icon */
+            icon?: string | null;
+            /** Field Schema */
+            field_schema?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * LoginRequest
+         * @description Login payload.
+         */
+        LoginRequest: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+        };
+        /**
+         * MessageResponse
+         * @description Generic message response (anti-enumeration uniform shape).
+         */
+        MessageResponse: {
+            /** Message */
+            message: string;
+        };
+        /**
+         * NotificationPrefRequest
+         * @description Upsert a single notification preference entry (F-024).
+         */
+        NotificationPrefRequest: {
+            /** Module Key */
+            module_key: string;
+            /** Event Type */
+            event_type: string;
+            /** Channel */
+            channel: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+        };
+        /**
+         * NotificationPrefResponse
+         * @description Notification preference record returned by the API.
+         */
+        NotificationPrefResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+            /** Module Key */
+            module_key: string;
+            /** Event Type */
+            event_type: string;
+            /** Channel */
+            channel: string;
+            /** Enabled */
+            enabled: boolean;
+        };
+        /**
+         * RegisterRequest
+         * @description Registration payload (F-001).
+         */
+        RegisterRequest: {
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /**
+             * Locale
+             * @default en
+             */
+            locale: string;
+            /**
+             * Theme
+             * @default system
+             */
+            theme: string;
+            /**
+             * Timezone
+             * @default UTC
+             */
+            timezone: string;
+        };
+        /**
+         * ResetPasswordRequest
+         * @description Reset-password payload (token + new password).
+         */
+        ResetPasswordRequest: {
+            /** Token */
+            token: string;
+            /** Password */
+            password: string;
+        };
+        /**
+         * UserResponse
+         * @description Public user profile returned by the API.
+         */
+        UserResponse: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Email */
+            email: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Is Admin */
+            is_admin: boolean;
+            /** Is Verified */
+            is_verified: boolean;
+            /** Locale */
+            locale: string;
+            /** Theme */
+            theme: string;
+            /** Timezone */
+            timezone: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * UserUpdateRequest
+         * @description Partial update for the current user profile (F-022).
+         *
+         *     All fields are optional — only the provided fields are updated.
+         */
+        UserUpdateRequest: {
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Theme */
+            theme?: string | null;
+            /** Locale */
+            locale?: string | null;
+            /** Timezone */
+            timezone?: string | null;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -92,6 +816,712 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    csrf_token_api_v1_auth_csrf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    register_api_v1_auth_register_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_email_get_api_v1_auth_verify_email_get: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_email_post_api_v1_auth_verify_email_post: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    login_api_v1_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_api_v1_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+        };
+    };
+    me_api_v1_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forgot_password_api_v1_auth_forgot_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_password_api_v1_auth_reset_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_profile_api_v1_users_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_profile_api_v1_users_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notification_prefs_api_v1_users_me_notification_prefs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPrefResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_notification_pref_api_v1_users_me_notification_prefs_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationPrefRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPrefResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_lists_api_v1_modules_lists_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_list_api_v1_modules_lists_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_list_api_v1_modules_lists__list_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_list_api_v1_modules_lists__list_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_list_api_v1_modules_lists__list_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_items_api_v1_modules_lists__list_id__items_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListItemResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_item_api_v1_modules_lists__list_id__items_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+            };
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListItemCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListItemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_item_api_v1_modules_lists__list_id__items__item_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+                item_id: string;
+            };
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_item_api_v1_modules_lists__list_id__items__item_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                list_id: string;
+                item_id: string;
+            };
+            cookie?: {
+                halo_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListItemUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListItemResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

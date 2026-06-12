@@ -41,8 +41,9 @@ export function SideMenu({
   const drawerRef = useRef<HTMLElement>(null);
 
   const isAdmin = auth?.user?.is_admin ?? false;
-  // No modules yet — placeholder empty array
-  const modules: Array<{ key: string; label: string; icon: string; path: string }> = [];
+  const modules: Array<{ key: string; label: string; iconKey: string; path: string }> = [
+    { key: "lists", label: t("modules.lists"), iconKey: "list", path: "/lists" },
+  ];
 
   // Close mobile drawer on Escape
   const handleKeyDown = useCallback(
@@ -183,6 +184,26 @@ export function SideMenu({
     </svg>
   );
 
+  // Per-module icons — small set for sidebar entries
+  const MODULE_ICONS: Record<string, React.ReactNode> = {
+    list: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    ),
+  };
+
   const sidebarContent = (
     <nav
       ref={isSmartphone ? drawerRef : undefined}
@@ -260,7 +281,7 @@ export function SideMenu({
         {modules.map((mod) => (
           <MenuEntry
             key={mod.key}
-            icon={moduleIcon}
+            icon={MODULE_ICONS[mod.iconKey] ?? moduleIcon}
             label={mod.label}
             path={mod.path}
             hideLabel={!showLabels}
