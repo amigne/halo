@@ -5,8 +5,9 @@ One row per (owner_context, owner_user_id, group_id, object_type) tuple.
 
 import uuid
 
-from sqlalchemy import Integer, String, UniqueConstraint, Uuid
+from sqlalchemy import Integer, String, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.schema import Index
 
 from halo_api.core.db import Base, UUIDPKMixin
 
@@ -42,12 +43,13 @@ class RefCounter(UUIDPKMixin, Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_ref_counters_scope",
             "owner_context",
             "owner_user_id",
-            "group_id",
+            text("COALESCE(group_id, '00000000-0000-0000-0000-000000000000')"),
             "object_type",
-            name="uq_ref_counters_scope",
+            unique=True,
         ),
     )
 
