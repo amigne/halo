@@ -22,10 +22,11 @@ export type ListItemUpdate = components["schemas"]["ListItemUpdate"];
 
 const BASE = ""; // Vite proxy handles /api in dev, Caddy in prod
 
-/** Thin GET helper — returns parsed JSON. */
+/** Thin GET helper — returns parsed JSON. Sends session cookie for auth. */
 async function apiGet(path: string): Promise<unknown> {
   const resp = await fetch(`${BASE}${path}`, {
     headers: { Accept: "application/json" },
+    credentials: "same-origin",
   });
   if (!resp.ok) {
     throw new Error(await extractError(resp));

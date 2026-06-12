@@ -521,3 +521,124 @@ test.describe("Sidebar navigation", () => {
     ).toBeVisible({ timeout: 5000 });
   });
 });
+
+test.describe("Autosave on list detail", () => {
+  test("edit list title on blur and reload persists", async ({ page }) => {
+    await mockAuth(page);
+    await page.addInitScript(() => {
+      localStorage.setItem("halo.lang", "fr");
+    });
+
+    const patchCalls: Array<Record<string, unknown>> = [];
+
+    // Mock main lists endpoint
+    await page.route("**/api/v1/modules/lists", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify([]),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Mock list detail — return the original title first, then update on PATCH
+    let listTitle = "Courses";
+
+    await page.route(`**/api/v1/modules/lists/${LIST_ID}`, async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: LIST_ID,
+            ref_no: 1,
+            owner_context: "personal",
+            owner_user_id: USER.id,
+            title: listTitle,
+            icon: null,
+            list_type: "checklist",
+            field_schema: [],
+            created_at: "2025-06-12T00:00:00Z",
+            updated_at: "2025-06-12T00:00:00Z",
+          }),
+        });
+      } else if (route.request().method() === "PATCH") {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        patchCalls.push(body);
+        if (body.title) listTitle = body.title as string;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: LIST_ID,
+            ref_no: 1,
+            owner_context: "personal",
+            owner_user_id: USER.id,
+            title: listTitle,
+            icon: null,
+            list_type: "checklist",
+            field_schema: [],
+            created_at: "2025-06-12T00:00:00Z",
+            updated_at: "2025-06-12T00:00:00Z",
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Mock empty items
+    await page.route(
+      `**/api/v1/modules/lists/${LIST_ID}/items`,
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify([]),
+        });
+      },
+    );
+
+    // Navigate to list modal
+    await page.goto(`/lists?modal=list/${LIST_ID}`, { timeout: 10000 });
+    await waitForApp(page);
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5000 });
+
+    // Find the list title input (first "Titre" label in the modal)
+    const titleInput = page.getByLabel("Titre").first();
+    await expect(titleInput).toBeVisible({ timeout: 5000 });
+
+    // Edit the title
+    await titleInput.clear();
+    await titleInput.fill("Courses modifiées");
+
+    // Blur to trigger autosave
+    await titleInput.blur();
+
+    // Wait for PATCH call
+    await expect
+      .poll(() => patchCalls.length, { timeout: 5000 })
+      .toBeGreaterThanOrEqual(1);
+
+    // Verify PATCH contained the new title
+    expect(patchCalls[0]).toHaveProperty("title", "Courses modifiées");
+
+    // The save indicator should show "Enregistré"
+    await expect(page.getByText("Enregistré").first()).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Reload — the modal re-opens at the same URL
+    await page.reload();
+    await waitForApp(page);
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5000 });
+
+    // The input should now show the persisted value
+    await expect(
+      page.locator('input[value="Courses modifiées"]'),
+    ).toBeVisible({ timeout: 5000 });
+  });
+});

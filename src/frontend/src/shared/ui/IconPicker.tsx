@@ -195,7 +195,6 @@ export function IconPicker({
     <div
       ref={containerRef}
       className="relative inline-block"
-      onKeyDown={handlePopoverKeyDown}
     >
       {/* Trigger button — shows selected or placeholder icon */}
       <div className="flex items-center gap-3">
@@ -241,6 +240,7 @@ export function IconPicker({
           className="absolute top-full left-0 mt-1 z-[var(--z-modal)] bg-surface border border-border rounded-lg shadow-lg p-3 w-[340px] max-w-[calc(100vw-2rem)]"
           role="dialog"
           aria-label={label ?? t("ui.iconPicker.placeholder")}
+          onKeyDown={handlePopoverKeyDown}
         >
           {/* Search input */}
           <div className="mb-3">

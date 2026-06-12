@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/ui/Button";
@@ -7,7 +6,7 @@ import { Spinner } from "@/shared/ui/Spinner";
 import { useRoutedModal } from "@/shared/modal/use-routed-modal";
 import { fetchLists } from "./api";
 import { ListCard } from "./components/ListCard";
-import { registerModals } from "./register";
+import "./register"; // side-effect: registers modals on import
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -22,11 +21,6 @@ export function ListsPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { openModal } = useRoutedModal();
-
-  // Register modals on mount
-  useEffect(() => {
-    registerModals();
-  }, []);
 
   // ── Data fetching ────────────────────────────────────────────────────────
 

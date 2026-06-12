@@ -163,6 +163,7 @@ export function CreateListModal({ onClose }: CreateListModalProps) {
         placeholder={t("lists.createModal.titlePlaceholder")}
         required
         minLength={1}
+        maxLength={500}
       />
 
       {/* Icon */}

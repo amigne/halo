@@ -271,7 +271,7 @@ export function SideMenu({
         </div>
       )}
 
-      {/* ── Modules section (empty for now) ─────────────────────────── */}
+      {/* ── Modules section ─────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-1 py-1 space-y-1">
         {showLabels && (
           <div className="px-3 py-1 text-xs font-semibold text-text-muted uppercase tracking-wide">

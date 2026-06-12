@@ -48,7 +48,10 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
   const { data: auth } = useAuth();
   const timezone = auth?.user?.timezone ?? "UTC";
 
-  const listId = modalKey?.replace(/^list\//, "") ?? "";
+  // Validate and sanitize the list ID from the URL to prevent path traversal
+  const rawId = modalKey?.replace(/^list\//, "") ?? "";
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const listId = UUID_RE.test(rawId) ? rawId : "";
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // ── Data fetching ────────────────────────────────────────────────────────
