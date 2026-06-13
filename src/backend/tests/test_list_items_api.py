@@ -764,9 +764,7 @@ async def test_csrf_blocks_item_delete_without_header(http_client: AsyncClient) 
     )
     item_id = r.json()["id"]
 
-    r_del = await http_client.delete(
-        f"/api/v1/modules/lists/{list_id}/items/{item_id}"
-    )
+    r_del = await http_client.delete(f"/api/v1/modules/lists/{list_id}/items/{item_id}")
     assert r_del.status_code == 403
     assert r_del.json()["code"] == "CSRF_INVALID"
 
