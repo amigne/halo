@@ -1,10 +1,10 @@
 """Pydantic v2 request/response schemas for the Lists module (specs/01 §10.1)."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 # ── Presets ───────────────────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ class ListItemCreate(BaseModel):
     priority: int | None = Field(default=None, ge=0)
     due_at: datetime | None = None
     notify_before: int | None = Field(default=None, ge=0)
-    position: int = 0
+    position: int = Field(default=0, ge=0)
 
 
 class ListItemUpdate(BaseModel):
@@ -141,3 +141,16 @@ class ListItemResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @field_serializer("due_at", "created_at", "updated_at")
+    @classmethod
+    def _serialize_datetime(cls, value: datetime | None) -> str | None:
+        """Ensure UTC-aware ISO-8601 with Z suffix regardless of dialect."""
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            # SQLite returns naive UTC — attach UTC before serializing
+            value = value.replace(tzinfo=timezone.utc)
+        else:
+            value = value.astimezone(timezone.utc)
+        return value.isoformat().replace("+00:00", "Z")

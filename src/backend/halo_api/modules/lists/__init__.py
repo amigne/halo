@@ -1,10 +1,10 @@
-"""Halo Lists module — data models (specs/03 §5, specs/01 §10.1).
-
-This module provides the ``List`` and ``ListItem`` ORM models.
-API routes, allocation logic, and the Module contract are introduced
-in later steps.
-"""
+"""Halo Lists module — data models, API routes, and Module contract."""
 
 from halo_api.modules.lists.models import List, ListItem
+from halo_api.modules.lists.module import ListsModule
+from halo_api.modules.registry import register
 
-__all__ = ["List", "ListItem"]
+# Register the module at import time so the registry discovers it.
+register(ListsModule())
+
+__all__ = ["List", "ListItem", "ListsModule"]

@@ -84,7 +84,7 @@ async def create_list(
         ref_no=ref_no,
         owner_context="personal",
         owner_user_id=user.id,
-        title=body.title,
+        title=body.title.strip(),
         icon=body.icon,
         list_type=body.list_type,
         field_schema=field_schema,
@@ -144,25 +144,22 @@ async def update_list(
 ) -> ListResponse:
     """Partially update a list (F-113).
 
-    Only the non-None fields in *body* are applied.  ``ref_no``,
-    ``list_type``, and owner fields are **never** modified.
+    All fields present in the request body are applied, **including**
+    those explicitly set to ``null`` (which clears the field).
+    ``ref_no``, ``list_type``, and owner fields are **never** modified.
     """
     lst = await _get_owned_list(list_id, user, db)
+    updates = body.model_dump(exclude_unset=True)
 
-    updated = False
-    if body.title is not None:
-        lst.title = body.title.strip()
-        updated = True
-    if body.icon is not None:
-        lst.icon = body.icon
-        updated = True
-    if body.field_schema is not None:
-        lst.field_schema = body.field_schema
-        updated = True
+    for field, value in updates.items():
+        if field in ("title", "icon", "field_schema"):
+            if field == "title" and value is not None:
+                setattr(lst, field, value.strip())
+            else:
+                setattr(lst, field, value)
 
-    if updated:
-        await db.commit()
-        await db.refresh(lst)
+    await db.commit()
+    await db.refresh(lst)
 
     return ListResponse.model_validate(lst)
 
@@ -291,39 +288,25 @@ async def update_item(
 ) -> ListItemResponse:
     """Partially update a list item (F-115).
 
-    Only the non-None fields in *body* are applied.  ``id``, ``list_id``,
-    and timestamps are **never** modified.
+    All fields present in the request body are applied, **including**
+    those explicitly set to ``null`` (which clears the field).
+    ``id``, ``list_id``, and timestamps are **never** modified.
 
     Returns 404 when the list or item is not found/owned.
     """
     _lst, item = await _get_owned_item(list_id, item_id, user, db)
+    updates = body.model_dump(exclude_unset=True)
+    mutable = {
+        "title", "description", "is_done", "priority",
+        "due_at", "notify_before", "position",
+    }
 
-    updated = False
-    if body.title is not None:
-        item.title = body.title
-        updated = True
-    if body.description is not None:
-        item.description = body.description
-        updated = True
-    if body.is_done is not None:
-        item.is_done = body.is_done
-        updated = True
-    if body.priority is not None:
-        item.priority = body.priority
-        updated = True
-    if body.due_at is not None:
-        item.due_at = body.due_at
-        updated = True
-    if body.notify_before is not None:
-        item.notify_before = body.notify_before
-        updated = True
-    if body.position is not None:
-        item.position = body.position
-        updated = True
+    for field, value in updates.items():
+        if field in mutable:
+            setattr(item, field, value)
 
-    if updated:
-        await db.commit()
-        await db.refresh(item)
+    await db.commit()
+    await db.refresh(item)
 
     return ListItemResponse.model_validate(item)
 

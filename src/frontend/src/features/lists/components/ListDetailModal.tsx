@@ -163,11 +163,10 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
     );
   }
 
-  // Parse field_schema from the list (handle both array and object shapes)
+  // field_schema is a dict like {"fields": [...]} — extract the fields array
+  const rawSchema = list.field_schema as { fields?: Array<{ key: string; type: string; required?: boolean }> } | null;
   const fieldSchema: Array<{ key: string; type: string; required?: boolean }> =
-    Array.isArray(list.field_schema)
-      ? (list.field_schema as Array<{ key: string; type: string; required?: boolean }>)
-      : [];
+    rawSchema?.fields ?? [];
 
   // ── Render ───────────────────────────────────────────────────────────────
 

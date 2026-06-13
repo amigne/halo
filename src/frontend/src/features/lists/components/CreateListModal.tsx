@@ -89,7 +89,7 @@ export function CreateListModal({ onClose }: CreateListModalProps) {
 
         // Only include field_schema for custom type; backend applies preset for others
         if (type === "custom") {
-          payload.field_schema = AVAILABLE_FIELDS.filter(
+          const fields = AVAILABLE_FIELDS.filter(
             (f) => selectedFields.has(f.key),
           ).map((f) => ({
             key: f.key,
@@ -100,7 +100,8 @@ export function CreateListModal({ onClose }: CreateListModalProps) {
               : f.key === "priority" ? "select"
               : "text",
             required: f.key === "title",
-          })) as unknown as ListCreate["field_schema"];
+          }));
+          payload.field_schema = { fields };
         }
 
         await createList(payload);

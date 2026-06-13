@@ -13,7 +13,7 @@ import { ListDetailModal } from "./components/ListDetailModal";
  */
 export function registerModals(): void {
   registerModal("create-list", CreateListModal, "lists.createModal.title");
-  registerModal("list/", ListDetailModal);
+  registerModal("list/", ListDetailModal, "lists.detailModal.title");
 }
 
 // Auto-register on import so modals are available when ModalHost renders
