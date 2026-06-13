@@ -300,8 +300,13 @@ async def update_item(
     _lst, item = await _get_owned_item(list_id, item_id, user, db)
     updates = body.model_dump(exclude_unset=True)
     mutable = {
-        "title", "description", "is_done", "priority",
-        "due_at", "notify_before", "position",
+        "title",
+        "description",
+        "is_done",
+        "priority",
+        "due_at",
+        "notify_before",
+        "position",
     }
 
     for field, value in updates.items():

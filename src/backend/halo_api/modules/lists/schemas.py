@@ -1,7 +1,7 @@
 """Pydantic v2 request/response schemas for the Lists module (specs/01 §10.1)."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from pydantic import BaseModel, Field, field_serializer
@@ -150,7 +150,7 @@ class ListItemResponse(BaseModel):
             return None
         if value.tzinfo is None:
             # SQLite returns naive UTC — attach UTC before serializing
-            value = value.replace(tzinfo=timezone.utc)
+            value = value.replace(tzinfo=UTC)
         else:
-            value = value.astimezone(timezone.utc)
+            value = value.astimezone(UTC)
         return value.isoformat().replace("+00:00", "Z")

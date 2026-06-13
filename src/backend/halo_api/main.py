@@ -8,13 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.routing import APIRouter
 from starlette.responses import JSONResponse
 
+import halo_api.modules.lists  # noqa: F401 — triggers register(ListsModule())
 from halo_api.accounts.router import router as accounts_router
 from halo_api.accounts.users import router as users_router
 from halo_api.core.config import settings
 from halo_api.core.csrf import CSRFCustomHeaderMiddleware
 from halo_api.core.db import check_db, engine
 from halo_api.core.redis import check_redis, close_redis
-import halo_api.modules.lists  # triggers register(ListsModule()) in __init__.py
 from halo_api.modules.lists.router import router as lists_router
 
 
