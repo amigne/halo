@@ -1,3 +1,14 @@
+/**
+ * E2E tests — Lists module (étape 4-6).
+ *
+ * Runs against the **real** backend stack.  The test user is seeded
+ * automatically by `global-setup.ts` (register + verify via mailpit).
+ *
+ * Prerequisites:
+ *   docker compose -f docker-compose.dev.yml --profile postgres up -d
+ *   cd src/frontend && npx playwright test
+ */
+
 import { expect, test } from "@playwright/test";
 
 const TEST_EMAIL = "e2e-real@halo.local";

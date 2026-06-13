@@ -8,6 +8,7 @@ import { defineConfig, devices } from "@playwright/test";
  * or use: `npx playwright test` (which auto-starts via webServer config).
  */
 export default defineConfig({
+  globalSetup: "./e2e/global-setup.ts",
   testDir: "./e2e",
   timeout: 30_000,
   expect: {

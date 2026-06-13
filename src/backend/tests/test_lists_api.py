@@ -753,3 +753,52 @@ async def test_create_empty_title(http_client: AsyncClient) -> None:
         json={"title": "", "list_type": "checklist"},
     )
     assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_patch_null_title_is_ignored(http_client: AsyncClient) -> None:
+    """PATCH {title:null} returns 200 and keeps the original title (non-nullable)."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+
+    r_create = await _csrf_post(
+        http_client,
+        "/api/v1/modules/lists",
+        csrf,
+        json={"title": "Original", "list_type": "tasks"},
+    )
+    list_id = r_create.json()["id"]
+
+    r_patch = await _csrf_patch(
+        http_client,
+        f"/api/v1/modules/lists/{list_id}",
+        csrf,
+        json={"title": None},
+    )
+    assert r_patch.status_code == 200
+    assert r_patch.json()["title"] == "Original"
+
+
+@pytest.mark.asyncio
+async def test_patch_null_icon_clears_it(http_client: AsyncClient) -> None:
+    """PATCH {icon:null} returns 200 and clears the icon (nullable)."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+
+    r_create = await _csrf_post(
+        http_client,
+        "/api/v1/modules/lists",
+        csrf,
+        json={"title": "With Icon", "list_type": "tasks", "icon": "star"},
+    )
+    list_id = r_create.json()["id"]
+    assert r_create.json()["icon"] == "star"
+
+    r_patch = await _csrf_patch(
+        http_client,
+        f"/api/v1/modules/lists/{list_id}",
+        csrf,
+        json={"icon": None},
+    )
+    assert r_patch.status_code == 200
+    assert r_patch.json()["icon"] is None

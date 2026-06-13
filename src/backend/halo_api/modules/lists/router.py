@@ -152,14 +152,17 @@ async def update_list(
     updates = body.model_dump(exclude_unset=True)
 
     for field, value in updates.items():
-        if field in ("title", "icon", "field_schema"):
-            if field == "title" and value is not None:
-                setattr(lst, field, value.strip())
-            elif field == "field_schema" and value is None:
-                # field_schema is non-nullable — skip explicit null
-                pass
-            else:
-                setattr(lst, field, value)
+        if field not in ("title", "icon", "field_schema"):
+            continue
+        if field == "title":
+            # title non-nullable : un null explicite est ignoré (no-op)
+            if value is not None:
+                lst.title = value.strip()
+            continue
+        if field == "field_schema" and value is None:
+            # field_schema non-nullable : ignorer un null explicite
+            continue
+        setattr(lst, field, value)
 
     await db.commit()
     await db.refresh(lst)
@@ -310,8 +313,12 @@ async def update_item(
     }
 
     for field, value in updates.items():
-        if field in mutable:
-            setattr(item, field, value)
+        if field not in mutable:
+            continue
+        if field == "title" and value is None:
+            # title non-nullable : ignorer un null explicite
+            continue
+        setattr(item, field, value)
 
     await db.commit()
     await db.refresh(item)

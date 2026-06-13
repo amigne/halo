@@ -764,6 +764,59 @@ async def test_csrf_blocks_item_delete_without_header(http_client: AsyncClient) 
     )
     item_id = r.json()["id"]
 
-    r_del = await http_client.delete(f"/api/v1/modules/lists/{list_id}/items/{item_id}")
+    r_del = await http_client.delete(
+        f"/api/v1/modules/lists/{list_id}/items/{item_id}"
+    )
     assert r_del.status_code == 403
     assert r_del.json()["code"] == "CSRF_INVALID"
+
+
+@pytest.mark.asyncio
+async def test_patch_item_null_title_ignored(http_client: AsyncClient) -> None:
+    """PATCH {title:null} on an item → 200, title kept (non-nullable)."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+    list_id = await _create_list(http_client, csrf)
+
+    r = await _csrf_post(
+        http_client,
+        f"/api/v1/modules/lists/{list_id}/items",
+        csrf,
+        json={"title": "Original Item"},
+    )
+    item_id = r.json()["id"]
+
+    r_patch = await _csrf_patch(
+        http_client,
+        f"/api/v1/modules/lists/{list_id}/items/{item_id}",
+        csrf,
+        json={"title": None},
+    )
+    assert r_patch.status_code == 200
+    assert r_patch.json()["title"] == "Original Item"
+
+
+@pytest.mark.asyncio
+async def test_patch_item_null_description_clears(http_client: AsyncClient) -> None:
+    """PATCH {description:null} on an item → 200, description cleared (nullable)."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+    list_id = await _create_list(http_client, csrf)
+
+    r = await _csrf_post(
+        http_client,
+        f"/api/v1/modules/lists/{list_id}/items",
+        csrf,
+        json={"title": "An item", "description": "Some notes"},
+    )
+    item_id = r.json()["id"]
+    assert r.json()["description"] == "Some notes"
+
+    r_patch = await _csrf_patch(
+        http_client,
+        f"/api/v1/modules/lists/{list_id}/items/{item_id}",
+        csrf,
+        json={"description": None},
+    )
+    assert r_patch.status_code == 200
+    assert r_patch.json()["description"] is None
