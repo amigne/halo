@@ -97,7 +97,7 @@ export function ListItemForm({
 
   const patchTitle = useCallback(
     async (partial: Record<string, string>) => {
-      await updateItem(listId, item.id, partial as unknown as ListItemUpdate);
+      await updateItem(listId, item.id, { title: partial.title });
       invalidate();
     },
     [listId, item.id, invalidate],
@@ -105,7 +105,7 @@ export function ListItemForm({
 
   const patchDescription = useCallback(
     async (partial: Record<string, string>) => {
-      await updateItem(listId, item.id, partial as unknown as ListItemUpdate);
+      await updateItem(listId, item.id, { description: partial.description });
       invalidate();
     },
     [listId, item.id, invalidate],

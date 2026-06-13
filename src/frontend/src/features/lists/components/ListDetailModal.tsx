@@ -78,7 +78,7 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
 
   const patchList = useCallback(
     async (partial: Record<string, string>) => {
-      await updateList(listId, partial as unknown as { title?: string });
+      await updateList(listId, { title: partial.title });
       queryClient.invalidateQueries({ queryKey: ["lists", listId] });
       queryClient.invalidateQueries({ queryKey: ["lists"] });
     },

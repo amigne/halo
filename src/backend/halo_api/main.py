@@ -14,6 +14,7 @@ from halo_api.core.config import settings
 from halo_api.core.csrf import CSRFCustomHeaderMiddleware
 from halo_api.core.db import check_db, engine
 from halo_api.core.redis import check_redis, close_redis
+import halo_api.modules.lists  # triggers register(ListsModule()) in __init__.py
 from halo_api.modules.lists.router import router as lists_router
 
 

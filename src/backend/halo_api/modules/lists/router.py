@@ -155,6 +155,9 @@ async def update_list(
         if field in ("title", "icon", "field_schema"):
             if field == "title" and value is not None:
                 setattr(lst, field, value.strip())
+            elif field == "field_schema" and value is None:
+                # field_schema is non-nullable — skip explicit null
+                pass
             else:
                 setattr(lst, field, value)
 
