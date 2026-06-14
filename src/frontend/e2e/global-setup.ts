@@ -12,7 +12,7 @@
  */
 
 import { request as playwrightRequest } from "@playwright/test";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -38,16 +38,18 @@ function clearRateLimitKeys(): void {
   for (const prefix of prefixes) {
     try {
       const pattern = `ratelimit:${prefix}:*`;
-      const keys = execSync(
-        `docker exec halo-redis-dev redis-cli KEYS "${pattern}"`,
+      const keys = execFileSync(
+        "docker",
+        ["exec", "halo-redis-dev", "redis-cli", "KEYS", pattern],
         { encoding: "utf-8", timeout: 5_000, stdio: ["ignore", "pipe", "pipe"] },
       ).trim();
       if (keys) {
         for (const key of keys.split("\n")) {
           const trimmed = key.trim();
           if (trimmed) {
-            execSync(
-              `docker exec halo-redis-dev redis-cli DEL "${trimmed}"`,
+            execFileSync(
+              "docker",
+              ["exec", "halo-redis-dev", "redis-cli", "DEL", trimmed],
               { timeout: 3_000, stdio: ["ignore", "pipe", "pipe"] },
             );
           }
