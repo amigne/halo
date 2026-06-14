@@ -6,7 +6,9 @@
 # --- Stage 1: build dependencies ---
 FROM python:3.14-slim AS builder
 
-WORKDIR /build
+# Use /app as WORKDIR so the venv is created at /app/.venv.
+# The runtime stage also uses /app, keeping shebangs valid after the COPY.
+WORKDIR /app
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
@@ -41,11 +43,11 @@ RUN groupadd --system --gid 1000 halo && \
 WORKDIR /app
 
 # Copy the virtual environment from builder
-COPY --from=builder --chown=halo:halo /build/.venv /app/.venv
+COPY --from=builder --chown=halo:halo /app/.venv /app/.venv
 
 # Copy application source
-COPY --from=builder --chown=halo:halo /build/halo_api /app/halo_api
-COPY --from=builder --chown=halo:halo /build/pyproject.toml /app/pyproject.toml
+COPY --from=builder --chown=halo:halo /app/halo_api /app/halo_api
+COPY --from=builder --chown=halo:halo /app/pyproject.toml /app/pyproject.toml
 
 # Copy alembic config and migrations
 COPY --chown=halo:halo alembic.ini /app/alembic.ini
