@@ -9,10 +9,18 @@
  *   cd src/frontend && npx playwright test
  */
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { expect, test } from "@playwright/test";
 
-const TEST_EMAIL = "e2e-real@halo.local";
-const TEST_PASSWORD = "Test1234!";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const CREDS = JSON.parse(
+  readFileSync(join(__dirname, ".auth", "credentials.json"), "utf-8"),
+) as { email: string; password: string };
+const TEST_EMAIL = CREDS.email;
+const TEST_PASSWORD = CREDS.password;
 const LIST_NAME = `Courses E2E ${Date.now()}`;
 const ITEM_NAME = "Pain complet bio";
 
