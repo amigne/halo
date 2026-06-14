@@ -70,6 +70,7 @@ services:
       - .env
     environment:
       - APP_ENV=production
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-halo}
     depends_on:
       db:
         condition: service_healthy
@@ -93,6 +94,8 @@ services:
     command: ["python", "-c", "import time; print('worker placeholder running'); time.sleep(3600)"]
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-halo}
     depends_on:
       db:
         condition: service_healthy
@@ -113,9 +116,9 @@ services:
     expose:
       - "5432"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=change-me
-      - POSTGRES_DB=halo
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+      - POSTGRES_DB=${POSTGRES_DB:-halo}
     volumes:
       - halo_pg_data:/var/lib/postgresql
     healthcheck:

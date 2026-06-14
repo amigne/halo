@@ -140,9 +140,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=halotest
-      - POSTGRES_DB=halodev
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-halotest}
+      - POSTGRES_DB=${POSTGRES_DB:-halodev}
     volumes:
       - halo_pg_data:/var/lib/postgresql
     healthcheck:
