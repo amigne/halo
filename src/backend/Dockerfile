@@ -47,6 +47,14 @@ COPY --from=builder --chown=halo:halo /build/.venv /app/.venv
 COPY --from=builder --chown=halo:halo /build/halo_api /app/halo_api
 COPY --from=builder --chown=halo:halo /build/pyproject.toml /app/pyproject.toml
 
+# Copy alembic config and migrations
+COPY --chown=halo:halo alembic.ini /app/alembic.ini
+COPY --chown=halo:halo migrations/ /app/migrations/
+
+# Copy and configure entrypoint
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Set PATH to use the venv
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
@@ -59,4 +67,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" || exit 1
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["python", "-m", "uvicorn", "halo_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

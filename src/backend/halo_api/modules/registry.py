@@ -109,7 +109,8 @@ async def disable(session: AsyncSession, key: str) -> None:
 async def sync_registry(session: AsyncSession) -> None:
     """Ensure every registered module has a row in the ``modules`` table.
 
-    Missing rows are inserted with ``enabled=False`` (safe default).
+    Missing rows are inserted with ``enabled=True`` (modules are active by
+    default — the admin can disable them later, step 7).
     Existing rows are left untouched — sync never re-enables a module
     that was explicitly disabled.
     """
@@ -118,6 +119,6 @@ async def sync_registry(session: AsyncSession) -> None:
 
     for key in _modules:
         if key not in existing_set:
-            session.add(ModuleRow(key=key, enabled=False))
+            session.add(ModuleRow(key=key, enabled=True))
 
     await session.flush()

@@ -15,7 +15,9 @@ from sqlalchemy.ext.asyncio import create_async_engine
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import halo_api.accounts.models
-import halo_api.modules.models  # noqa: F401 — registers Module in Base.metadata
+import halo_api.modules.lists.models
+import halo_api.modules.models
+import halo_api.refs.models  # noqa: F401 — registers RefCounter
 from halo_api.core.config import settings
 from halo_api.core.db import Base
 

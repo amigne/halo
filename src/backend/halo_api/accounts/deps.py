@@ -33,6 +33,9 @@ async def get_current_user(
             detail={"code": "UNAUTHENTICATED", "message": "Invalid or expired session"},
         )
 
+    from halo_api.core.context import current_user_cv
+
+    current_user_cv.set(user)
     return user
 
 

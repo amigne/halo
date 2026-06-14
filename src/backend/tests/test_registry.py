@@ -245,7 +245,9 @@ async def test_sync_registry_inserts_missing_rows(db_url: str) -> None:
         async with session_factory() as session:
             row = await session.get(ModuleRow, "test_sync_mod")
             assert row is not None, "sync_registry should have created the row"
-            assert row.enabled is False, "new rows must default to enabled=False"
+            assert row.enabled is True, (
+                "new rows must default to enabled=True (active by default)"
+            )
     finally:
         from halo_api.modules.registry import _modules
 

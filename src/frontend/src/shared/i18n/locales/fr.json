@@ -122,6 +122,78 @@
       "placeholder": "Saisissez du texte…"
     }
   },
+  "modules": {
+    "lists": "Listes"
+  },
+  "lists": {
+    "title": "Listes",
+    "create": "Créer une liste",
+    "empty": {
+      "title": "Aucune liste",
+      "description": "Créez votre première liste pour organiser vos tâches, listes à cocher et idées."
+    },
+    "type": {
+      "tasks": "Tâches",
+      "checklist": "À cocher",
+      "ideas": "Idées",
+      "custom": "Personnalisé"
+    },
+    "createModal": {
+      "title": "Créer une liste",
+      "typeLabel": "Type",
+      "titleLabel": "Titre",
+      "titlePlaceholder": "Ma liste…",
+      "iconLabel": "Icône",
+      "advancedTitle": "Champs personnalisés",
+      "fieldTitle": "Titre",
+      "fieldDescription": "Description",
+      "fieldPriority": "Priorité",
+      "fieldDueAt": "Échéance",
+      "fieldNotifyBefore": "Rappel",
+      "fieldAssignee": "Responsable",
+      "fieldIsDone": "Statut fait",
+      "submit": "Créer",
+      "success": "Liste créée avec succès"
+    },
+    "detailModal": {
+      "title": "Détails de la liste",
+      "items": "{{count}} élément(s)",
+      "delete": "Supprimer la liste",
+      "deleteConfirm": "Voulez-vous vraiment supprimer cette liste ?",
+      "deleteConfirmYes": "Oui, supprimer",
+      "deleteConfirmNo": "Annuler",
+      "deleted": "Liste supprimée",
+      "addItem": "Ajouter un élément",
+      "noItems": "Aucun élément",
+      "noItemsHint": "Ajoutez votre premier élément à cette liste."
+    },
+    "item": {
+      "title": "Titre",
+      "titlePlaceholder": "Titre de l'élément…",
+      "description": "Description",
+      "descriptionPlaceholder": "Description…",
+      "priority": "Priorité",
+      "priorityLow": "Basse",
+      "priorityMedium": "Moyenne",
+      "priorityHigh": "Haute",
+      "priorityUrgent": "Urgente",
+      "dueAt": "Échéance",
+      "notifyBefore": "Rappel (min)",
+      "assignee": "Responsable",
+      "delete": "Supprimer l'élément",
+      "done": "Marquer fait",
+      "newItemTitle": "Nouvel élément"
+    },
+    "error": {
+      "fetch": "Échec du chargement des listes",
+      "create": "Échec de la création",
+      "update": "Échec de la sauvegarde",
+      "delete": "Échec de la suppression",
+      "invalidId": "Identifiant de liste invalide",
+      "notFound": "Liste introuvable",
+      "retry": "Réessayer"
+    }
+  },
   "autosave": {
     "saving": "Enregistrement…",
     "saved": "Enregistré",

@@ -89,6 +89,9 @@ async def get_session() -> AsyncGenerator[AsyncSession]:
         async def list_items(session: AsyncSession = Depends(get_session)): ...
     """
     async with async_session() as session:
+        from halo_api.core.context import current_session_cv
+
+        current_session_cv.set(session)
         yield session
 
 

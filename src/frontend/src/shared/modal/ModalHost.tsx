@@ -6,7 +6,7 @@ import { useRoutedModal } from "./use-routed-modal";
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 interface RegisteredModal {
-  component: ComponentType<{ onClose: () => void }>;
+  component: ComponentType<{ onClose: () => void; modalKey?: string }>;
   /**
    * i18n key for the modal title.  When omitted the host falls back to
    * `modal.<key>.title` and passes it through `t()` so translations can be
@@ -16,6 +16,7 @@ interface RegisteredModal {
 }
 
 const modalRegistry = new Map<string, RegisteredModal>();
+const prefixRegistry = new Map<string, RegisteredModal>();
 
 /**
  * Register a modal component for a given key so that `ModalHost` can render it
@@ -24,17 +25,26 @@ const modalRegistry = new Map<string, RegisteredModal>();
  * Registration is module-level — call it in a module initializer (or a
  * `useEffect` inside a feature layout) before the key is ever opened.
  *
+ * **Prefix matching**: if the key ends with `/` (e.g. `"list/"`), the modal
+ * matches any stack key that starts with that prefix (e.g. `"list/<uuid>"`).
+ * The component receives the full matched key as `modalKey`.
+ *
  * @param key       The string that appears in the URL (`?modal=<key>`).
+ *                  If it ends with `/`, prefix-matching is enabled.
  * @param component The React component to render inside the modal shell.
- *                  Receives `onClose` so the component can programmatically close itself.
+ *                  Receives `onClose` (and `modalKey` for prefix matches).
  * @param titleKey  Optional i18n key for the modal title. Falls back to `modal.<key>.title`.
  */
 export function registerModal(
   key: string,
-  component: ComponentType<{ onClose: () => void }>,
+  component: ComponentType<{ onClose: () => void; modalKey?: string }>,
   titleKey?: string,
 ): void {
-  modalRegistry.set(key, { component, titleKey });
+  if (key.endsWith("/")) {
+    prefixRegistry.set(key, { component, titleKey });
+  } else {
+    modalRegistry.set(key, { component, titleKey });
+  }
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -54,11 +64,30 @@ export function ModalHost(): ReactElement | null {
   const modals = useMemo(() => {
     return modalStack
       .map((key, index) => {
-        const registered = modalRegistry.get(key);
+        // Try exact match first, then prefix match
+        let registered = modalRegistry.get(key);
+        let matchedKey: string | undefined;
+
+        if (!registered) {
+          for (const [prefix, reg] of prefixRegistry.entries()) {
+            if (key.startsWith(prefix)) {
+              registered = reg;
+              matchedKey = key;
+              break;
+            }
+          }
+        }
+
         if (!registered) return null;
         const { component: Component, titleKey } = registered;
         const resolvedKey = titleKey ?? `modal.${key}.title`;
-        return { key, index, Component, title: t(resolvedKey) };
+        return {
+          key,
+          index,
+          Component,
+          title: t(resolvedKey),
+          modalKey: matchedKey,
+        };
       })
       .filter((m): m is NonNullable<typeof m> => m !== null);
   }, [modalStack, t]);
@@ -68,7 +97,7 @@ export function ModalHost(): ReactElement | null {
   return (
     <>
       {modals.map((m) => {
-        const { key, index, Component, title } = m;
+        const { key, index, Component, title, modalKey } = m;
         return (
           <Modal
             key={`${key}-${index}`}
@@ -76,7 +105,7 @@ export function ModalHost(): ReactElement | null {
             onClose={closeModal}
             title={title}
           >
-            <Component onClose={closeModal} />
+            <Component onClose={closeModal} modalKey={modalKey} />
           </Modal>
         );
       })}
