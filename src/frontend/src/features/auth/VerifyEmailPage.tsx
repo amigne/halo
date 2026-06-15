@@ -7,7 +7,7 @@ import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 export function VerifyEmailPage() {
   const { t } = useTranslation();
-  const search = useSearch({ from: "/verify-email" }) as { token?: string };
+  const search = useSearch({ from: "/auth/verify-email" }) as { token?: string };
   const [status, setStatus] = useState<
     "loading" | "ready" | "verifying" | "success" | "error"
   >("loading");

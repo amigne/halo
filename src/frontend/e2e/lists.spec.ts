@@ -37,7 +37,7 @@ test.describe("Lists (real backend)", () => {
 
     // 1. Login
     await page.goto("/login", { timeout: 15_000 });
-    await page.waitForSelector('header[role="banner"]', { timeout: 10_000 });
+    await page.waitForSelector("#login-email", { timeout: 10_000 });
     await page.locator("#login-email").fill(TEST_EMAIL);
     await page.locator("#login-password").fill(TEST_PASSWORD);
     await page.locator('button[type="submit"]').click();

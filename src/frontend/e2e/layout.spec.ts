@@ -67,6 +67,7 @@ test.describe("Theme", () => {
   test("topbar theme cycle switches data-theme and persists across reload", async ({
     page,
   }) => {
+    await mockAuth(page);
     await page.goto("/");
 
     // The anti-flash script sets a default theme before React mounts.
@@ -135,6 +136,7 @@ test.describe("Language", () => {
   test("topbar language toggle switches FR↔EN and persists across reload", async ({
     page,
   }) => {
+    await mockAuth(page);
     // Go to page first (so localStorage is accessible), then set language and reload
     await page.goto("/");
     await page.evaluate(() => localStorage.setItem("halo.lang", "fr"));
@@ -210,12 +212,12 @@ test.describe("Autosave", () => {
   test("modifying first name on settings page saves on blur and persists", async ({
     page,
   }) => {
+    // Mock auth before any navigation so the guard doesn't redirect
+    await mockAuth(page);
+
     // Set French locale for deterministic labels
     await page.goto("/");
     await page.evaluate(() => localStorage.setItem("halo.lang", "fr"));
-
-    // Mock auth to allow access to settings page
-    await mockAuth(page);
 
     // Track PATCH calls to the profile endpoint (exact URL match)
     const patchCalls: Array<Record<string, string>> = [];
@@ -295,6 +297,7 @@ test.describe("Autosave", () => {
 
 test.describe("Accessibility", () => {
   test("skip-to-content link is present and focusable", async ({ page }) => {
+    await mockAuth(page);
     await page.goto("/");
     await waitForApp(page);
 
@@ -312,6 +315,7 @@ test.describe("Accessibility", () => {
     // An actual modal trigger requires modules (étape 4+), but we verify
     // the shell renders without crashing. The real focus-trap behaviour
     // is covered by unit tests (modal.test.tsx).
+    await mockAuth(page);
     await page.goto("/");
     await waitForApp(page);
 
