@@ -7,7 +7,7 @@ import { apiMutate } from "@/shared/api/fetch-wrapper";
 
 export function ResetPasswordPage() {
   const { t } = useTranslation();
-  const search = useSearch({ from: "/reset-password" }) as { token?: string };
+  const search = useSearch({ from: "/auth/reset-password" }) as { token?: string };
   const token = search.token ?? "";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");

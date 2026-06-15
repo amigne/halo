@@ -1,7 +1,9 @@
 import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
 import { HomePage } from "./routes/home";
 import { NotFoundPage } from "./routes/not-found";
-import { AppLayout } from "./App";
+import { RootLayout } from "@/shared/layout/RootLayout";
+import { AuthLayout } from "@/shared/layout/AuthLayout";
+import { ProtectedLayout } from "./ProtectedLayout";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { VerifyEmailPage } from "@/features/auth/VerifyEmailPage";
@@ -13,7 +15,7 @@ import { ListsPage } from "@/features/lists";
 // ── Root route ──────────────────────────────────────────────────────────────
 
 const rootRoute = createRootRoute({
-  component: AppLayout,
+  component: RootLayout,
   validateSearch: (
     search: Record<string, unknown>,
   ): { modal?: string[] } => {
@@ -31,28 +33,36 @@ const rootRoute = createRootRoute({
   },
 });
 
-// ── Leaf routes ─────────────────────────────────────────────────────────────
+// ── Pathless layout routes ──────────────────────────────────────────────────
 
-const homeRoute = createRoute({
+const authLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
-  component: HomePage,
+  id: "auth",
+  component: AuthLayout,
 });
 
-const loginRoute = createRoute({
+const appLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
+  id: "app",
+  component: ProtectedLayout,
+});
+
+// ── Leaf routes — auth (under authLayoutRoute) ──────────────────────────────
+
+const loginRoute = createRoute({
+  getParentRoute: () => authLayoutRoute,
   path: "/login",
   component: LoginPage,
 });
 
 const registerRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: "/register",
   component: RegisterPage,
 });
 
 const verifyEmailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: "/verify-email",
   component: VerifyEmailPage,
   validateSearch: (search: Record<string, unknown>) => ({
@@ -61,13 +71,13 @@ const verifyEmailRoute = createRoute({
 });
 
 const forgotPasswordRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: "/forgot-password",
   component: ForgotPasswordPage,
 });
 
 const resetPasswordRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => authLayoutRoute,
   path: "/reset-password",
   component: ResetPasswordPage,
   validateSearch: (search: Record<string, unknown>) => ({
@@ -75,17 +85,27 @@ const resetPasswordRoute = createRoute({
   }),
 });
 
+// ── Leaf routes — app (under appLayoutRoute) ────────────────────────────────
+
+const homeRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/",
+  component: HomePage,
+});
+
 const settingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: "/settings",
   component: SettingsPage,
 });
 
 const listsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => appLayoutRoute,
   path: "/lists",
   component: ListsPage,
 });
+
+// ── Not-found route (child of rootRoute, outside both layouts) ──────────────
 
 const notFoundRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -96,14 +116,18 @@ const notFoundRoute = createRoute({
 // ── Route tree ──────────────────────────────────────────────────────────────
 
 const routeTree = rootRoute.addChildren([
-  homeRoute,
-  loginRoute,
-  registerRoute,
-  verifyEmailRoute,
-  forgotPasswordRoute,
-  resetPasswordRoute,
-  settingsRoute,
-  listsRoute,
+  authLayoutRoute.addChildren([
+    loginRoute,
+    registerRoute,
+    verifyEmailRoute,
+    forgotPasswordRoute,
+    resetPasswordRoute,
+  ]),
+  appLayoutRoute.addChildren([
+    homeRoute,
+    settingsRoute,
+    listsRoute,
+  ]),
   notFoundRoute,
 ]);
 
