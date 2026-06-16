@@ -145,6 +145,7 @@ export function RegisterPage() {
           {mismatch && (
             <p
               id="reg-password-confirm-err"
+              role="alert"
               className="mt-1 text-sm text-danger"
             >
               {t("auth.passwordMismatch")}
