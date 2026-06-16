@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Spinner } from "./Spinner";
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -27,6 +27,8 @@ const sizeClasses: Record<ButtonSize, string> = {
   sm: "px-3 py-1 text-xs rounded-sm min-h-[44px] min-w-[44px]",
   md: "px-4 py-2 text-sm rounded-md min-h-[44px] min-w-[44px]",
   lg: "px-6 py-3 text-base rounded-lg min-h-[44px] min-w-[44px]",
+  icon:
+    "h-9 w-9 rounded-md [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
 };
 
 /**
