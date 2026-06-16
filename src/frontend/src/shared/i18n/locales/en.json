@@ -182,6 +182,9 @@
       "assignee": "Assignee",
       "delete": "Delete item",
       "done": "Mark done",
+      "edit": "Edit",
+      "doneEditing": "Done editing",
+      "overdue": "Overdue",
       "newItemTitle": "New item"
     },
     "error": {

@@ -1,14 +1,21 @@
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { AutosaveField } from "@/shared/autosave/AutosaveField";
 import { useAutosaveField } from "@/shared/autosave/use-autosave-field";
 import { SaveIndicator } from "@/shared/autosave/SaveIndicator";
 import { DateTimePicker } from "@/shared/ui/DateTimePicker";
 import { Select } from "@/shared/ui/Select";
 import { TagEditor } from "@/shared/ui/TagEditor";
+import { Button } from "@/shared/ui/Button";
 import { useToast } from "@/shared/ui/Toast";
-import { updateItem, deleteItem, type ListItemResponse, type ListItemUpdate } from "../api";
+import { getIconPath } from "@/shared/ui/icon-data";
+import { formatDateTime } from "@/shared/datetime/format";
+import {
+  updateItem,
+  deleteItem,
+  type ListItemResponse,
+  type ListItemUpdate,
+} from "../api";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -26,18 +33,78 @@ interface ListItemFormProps {
   onDeleted: () => void;
 }
 
-// ── Save status for non-string fields (immediate save) ─────────────────────────
-
 type FieldSaveStatus = "idle" | "saving" | "saved" | "error";
+
+// ── Priority helpers ───────────────────────────────────────────────────────────
+
+function getPriorityLabel(
+  priority: number | null | undefined,
+  t: ReturnType<typeof useTranslation>["t"],
+): string {
+  if (priority == null) return "";
+  const keys = [
+    "lists.item.priorityLow",
+    "lists.item.priorityMedium",
+    "lists.item.priorityHigh",
+    "lists.item.priorityUrgent",
+  ];
+  return t(keys[priority] ?? "");
+}
+
+function getPriorityColor(priority: number | null | undefined): string {
+  if (priority == null) return "";
+  const colors = [
+    "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200", // Low
+    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200", // Medium
+    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200", // High
+    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200", // Urgent
+  ];
+  return colors[priority] ?? "";
+}
+
+// ── Due date helpers ───────────────────────────────────────────────────────────
+
+function isOverdue(dueAt: string | null | undefined): boolean {
+  if (!dueAt) return false;
+  return new Date(dueAt).getTime() < Date.now();
+}
+
+// ── Tiny SVG icon renderer (16px) ──────────────────────────────────────────────
+
+function SvgIcon({ d, label }: { d: string; label?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      aria-label={label}
+    >
+      <path d={d} />
+    </svg>
+  );
+}
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
 /**
- * ListItemForm — a single item row with inline editing via autosave.
+ * ListItemForm — read-first item row with on-demand inline editing.
  *
- * Fields are shown according to the list's `field_schema`.  String fields
- * (title, description) use `<AutosaveField>` (debounced PATCH on blur).
- * Other fields (checkbox, select, date, number) save immediately on change.
+ * **Read mode** (default): compact row with is_done checkbox, title text
+ * (strikethrough + muted if done), priority chip, due date chip, and
+ * hover actions (edit + delete).
+ *
+ * **Edit mode** (click row or pencil): expanded editable fields according
+ * to the list's field_schema.  Autosave on blur (U-061), Escape cancels
+ * the current field (U-062).  Click "Done" or re-click the row to collapse.
+ *
+ * useAutosaveField hooks are called unconditionally so they survive
+ * read↔edit transitions — no flush-on-unmount needed.
  */
 export function ListItemForm({
   item,
@@ -46,11 +113,12 @@ export function ListItemForm({
   timezone,
   onDeleted,
 }: ListItemFormProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const { addToast } = useToast();
+  const lang = i18n.language;
 
-  // Per-field save status for non-autosave fields
+  const [editing, setEditing] = useState(false);
   const [fieldStatus, setFieldStatus] = useState<
     Record<string, FieldSaveStatus>
   >({});
@@ -58,13 +126,15 @@ export function ListItemForm({
   const schemaMap = new Map(fieldSchema.map((f) => [f.key, f]));
   const hasField = (key: string) => schemaMap.has(key);
 
-  // ── PATCH helper ─────────────────────────────────────────────────────────
+  // ── Query invalidation ────────────────────────────────────────────────────
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: ["lists", listId, "items"],
     });
   }, [queryClient, listId]);
+
+  // ── PATCH helper ──────────────────────────────────────────────────────────
 
   const patchItem = useCallback(
     async (partial: ListItemUpdate) => {
@@ -74,7 +144,7 @@ export function ListItemForm({
     [listId, item.id, invalidate],
   );
 
-  // ── Immediate save for non-string fields ─────────────────────────────────
+  // ── Immediate save (non-string fields) ────────────────────────────────────
 
   const saveField = useCallback(
     async (fieldKey: string, value: unknown) => {
@@ -93,25 +163,38 @@ export function ListItemForm({
     [patchItem, addToast, t],
   );
 
-  // ── Autosave patch for string fields ─────────────────────────────────────
+  // ── Autosave hooks (always active, even in read mode) ─────────────────────
 
-  const patchTitle = useCallback(
-    async (partial: Record<string, string>) => {
+  const titleAutosave = useAutosaveField({
+    value: item.title,
+    fieldKey: "title",
+    onPatch: async (partial) => {
       await updateItem(listId, item.id, { title: partial.title });
       invalidate();
     },
-    [listId, item.id, invalidate],
-  );
+  });
 
-  const patchDescription = useCallback(
-    async (partial: Record<string, string>) => {
-      await updateItem(listId, item.id, { description: partial.description });
+  const descAutosave = useAutosaveField({
+    value: item.description ?? "",
+    fieldKey: "description",
+    onPatch: async (partial) => {
+      await updateItem(listId, item.id, {
+        description: partial.description,
+      });
       invalidate();
     },
-    [listId, item.id, invalidate],
-  );
+  });
 
-  // ── Delete handler ───────────────────────────────────────────────────────
+  const notifyAutosave = useAutosaveField({
+    value: item.notify_before != null ? String(item.notify_before) : "",
+    fieldKey: "notify_before",
+    onPatch: async (partial) => {
+      const num = partial.notify_before ? Number(partial.notify_before) : null;
+      await patchItem({ notify_before: num });
+    },
+  });
+
+  // ── Delete handler ────────────────────────────────────────────────────────
 
   const handleDelete = useCallback(async () => {
     try {
@@ -125,24 +208,122 @@ export function ListItemForm({
     }
   }, [listId, item.id, onDeleted, addToast, t]);
 
-  // ── Notify-before autosave (number field, debounced) ─────────────────────
+  // ── Edit mode toggle ──────────────────────────────────────────────────────
 
-  const notifyAutosave = useAutosaveField({
-    value: item.notify_before != null ? String(item.notify_before) : "",
-    fieldKey: "notify_before",
-    onPatch: async (partial) => {
-      const num = partial.notify_before ? Number(partial.notify_before) : null;
-      await patchItem({ notify_before: num });
-    },
-  });
+  const enterEdit = useCallback(() => setEditing(true), []);
+  const exitEdit = useCallback(() => setEditing(false), []);
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render: Read mode ─────────────────────────────────────────────────────
+
+  if (!editing) {
+    return (
+      <div
+        className="flex items-center gap-3 py-2 cursor-pointer group"
+        onClick={enterEdit}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            enterEdit();
+          }
+        }}
+        aria-label={`${t("lists.item.edit")} : ${item.title}`}
+      >
+        {/* is_done checkbox — always visible, toggle does NOT enter edit mode */}
+        {hasField("is_done") && (
+          <label
+            className="flex items-center shrink-0 cursor-pointer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="checkbox"
+              checked={item.is_done}
+              onChange={(e) => saveField("is_done", e.target.checked)}
+              className="h-5 w-5 rounded border-border text-primary focus:ring-focus-ring cursor-pointer"
+              aria-label={t("lists.item.done")}
+            />
+          </label>
+        )}
+
+        {/* Title as text — strikethrough + muted when done */}
+        <span
+          className={`flex-1 min-w-0 truncate text-sm ${
+            item.is_done
+              ? "line-through text-text-muted"
+              : "text-text"
+          }`}
+        >
+          {item.title || " "}
+        </span>
+
+        {/* Priority chip — only if value exists AND field is in schema */}
+        {item.priority != null && hasField("priority") && (
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${getPriorityColor(item.priority)}`}
+          >
+            {getPriorityLabel(item.priority, t)}
+          </span>
+        )}
+
+        {/* Due date chip — only if value exists AND field is in schema */}
+        {item.due_at && hasField("due_at") && (
+          <span
+            className={`inline-flex items-center gap-1 text-xs shrink-0 ${
+              isOverdue(item.due_at)
+                ? "text-red-600 dark:text-red-400 font-medium"
+                : "text-text-muted"
+            }`}
+          >
+            <SvgIcon d={getIconPath("calendar")!} />
+            <span>
+              {formatDateTime(item.due_at, timezone, lang, {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+            {isOverdue(item.due_at) && (
+              <span className="sr-only">{t("lists.item.overdue")}</span>
+            )}
+          </span>
+        )}
+
+        {/* Hover actions — edit pencil + delete trash */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 shrink-0">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              enterEdit();
+            }}
+            aria-label={t("lists.item.edit")}
+          >
+            <SvgIcon d={getIconPath("pencil")!} />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+            aria-label={t("lists.item.delete")}
+          >
+            <SvgIcon d={getIconPath("trash")!} />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Render: Edit mode ─────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-wrap items-start gap-3 p-3 rounded-md border border-border bg-surface hover:bg-border/50 transition-colors group">
+    <div className="flex flex-wrap items-start gap-3 py-2">
       {/* is_done checkbox */}
       {hasField("is_done") && (
-        <label className="flex items-center pt-1 cursor-pointer">
+        <label className="flex items-center pt-1 cursor-pointer shrink-0">
           <input
             type="checkbox"
             checked={item.is_done}
@@ -153,46 +334,53 @@ export function ListItemForm({
         </label>
       )}
 
-      {/* Main fields */}
+      {/* Main fields: title + description */}
       <div className="flex-1 min-w-0 space-y-2">
-        {/* Title — always present, uses AutosaveField */}
-        <AutosaveField
-          value={item.title}
-          fieldKey="title"
-          onPatch={patchTitle}
-          label={t("lists.item.title")}
-          className="!flex-row !items-center gap-2"
-        />
-
-        {/* Description */}
-        {hasField("description") && (
-          <AutosaveField
-            value={item.description ?? ""}
-            fieldKey="description"
-            onPatch={patchDescription}
-            label={t("lists.item.description")}
-            renderInput={(api) => (
-              <div
-                onBlur={api.onBlur}
-                onKeyDown={api.handleKeyDown}
-                className="w-full"
-              >
-                <TagEditor
-                  value={api.localValue}
-                  onChange={api.onChange}
-                  variant="multiline"
-                  placeholder={t("lists.item.descriptionPlaceholder")}
-                  label={t("lists.item.description")}
-                />
-              </div>
-            )}
+        {/* Title — raw input + SaveIndicator, no AutosaveField wrapper */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={titleAutosave.localValue}
+            onChange={(e) => titleAutosave.onChange(e.target.value)}
+            onBlur={titleAutosave.onBlur}
+            onKeyDown={(e) => titleAutosave.handleKeyDown(e)}
+            className="min-h-[36px] w-full px-2 py-1 rounded border bg-surface text-text text-sm placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none border-border"
+            placeholder={t("lists.item.titlePlaceholder")}
+            aria-label={t("lists.item.title")}
           />
+          <SaveIndicator
+            status={titleAutosave.status}
+            error={titleAutosave.error}
+            onRetry={titleAutosave.retry}
+          />
+        </div>
+
+        {/* Description — only if in field_schema */}
+        {hasField("description") && (
+          <div
+            onBlur={descAutosave.onBlur}
+            onKeyDown={descAutosave.handleKeyDown}
+            className="w-full"
+          >
+            <TagEditor
+              value={descAutosave.localValue}
+              onChange={descAutosave.onChange}
+              variant="multiline"
+              placeholder={t("lists.item.descriptionPlaceholder")}
+              label={t("lists.item.description")}
+            />
+            <SaveIndicator
+              status={descAutosave.status}
+              error={descAutosave.error}
+              onRetry={descAutosave.retry}
+            />
+          </div>
         )}
       </div>
 
       {/* Secondary fields */}
       <div className="flex flex-wrap items-center gap-2 shrink-0">
-        {/* Priority */}
+        {/* Priority — Select, immediate save */}
         {hasField("priority") && (
           <div className="flex items-center gap-1">
             <Select
@@ -215,7 +403,7 @@ export function ListItemForm({
           </div>
         )}
 
-        {/* Due date */}
+        {/* Due date — DateTimePicker, immediate save */}
         {hasField("due_at") && (
           <div className="flex items-center gap-1">
             <DateTimePicker
@@ -230,7 +418,7 @@ export function ListItemForm({
           </div>
         )}
 
-        {/* Notify before */}
+        {/* Notify before — number input with autosave */}
         {hasField("notify_before") && (
           <div className="flex items-center gap-1">
             <label className="text-xs font-medium text-text">
@@ -262,27 +450,15 @@ export function ListItemForm({
         )}
       </div>
 
-      {/* Delete button */}
-      <button
-        type="button"
-        onClick={handleDelete}
-        className="flex items-center justify-center w-8 h-8 rounded-md text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none cursor-pointer"
-        aria-label={t("lists.item.delete")}
+      {/* Done editing button — collapse back to read mode */}
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={exitEdit}
+        aria-label={t("lists.item.doneEditing")}
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-        </svg>
-      </button>
+        <SvgIcon d={getIconPath("check")!} />
+      </Button>
     </div>
   );
 }

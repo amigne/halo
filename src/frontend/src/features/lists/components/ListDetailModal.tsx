@@ -237,7 +237,7 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
             }
           />
         ) : (
-          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+          <div className="divide-y divide-border max-h-[50vh] overflow-y-auto">
             {items.map((item) => (
               <ListItemForm
                 key={item.id}

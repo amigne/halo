@@ -182,6 +182,9 @@
       "assignee": "Responsable",
       "delete": "Supprimer l'élément",
       "done": "Marquer fait",
+      "edit": "Modifier",
+      "doneEditing": "Terminé",
+      "overdue": "En retard",
       "newItemTitle": "Nouvel élément"
     },
     "error": {

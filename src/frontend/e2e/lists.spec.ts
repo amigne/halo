@@ -87,12 +87,14 @@ test.describe("Lists (real backend)", () => {
     );
     await page.getByRole("button", { name: /Ajouter/ }).first().click();
     await addResp;
-    // The new item is the last "Titre" input (after list title)
+    // 5b. Verify read mode: the new item title is visible as TEXT (not input)
+    await expect(page.getByText("Nouvel élément")).toBeVisible({ timeout: 10_000 });
+
+    // 6. Click row to enter edit mode, edit, autosave, return to read
+    await page.getByText("Nouvel élément").click();
     const itemInput = page.getByLabel("Titre").last();
     await expect(itemInput).toBeVisible({ timeout: 10_000 });
-    await expect(itemInput).toHaveValue("Nouvel élément");
 
-    // 6. Edit and autosave
     await itemInput.clear();
     await itemInput.fill(ITEM_NAME);
     const patchResp = page.waitForResponse(
@@ -105,7 +107,13 @@ test.describe("Lists (real backend)", () => {
       timeout: 10_000,
     });
 
-    // 7. Reload and verify persistence
+    // Exit edit mode
+    await page.getByLabel("Terminé").click();
+
+    // Verify read mode shows updated title as text
+    await expect(page.getByText(ITEM_NAME)).toBeVisible({ timeout: 10_000 });
+
+    // 7. Reload and verify persistence (title still visible as text)
     const itemsResp2 = page.waitForResponse(
       (r) => r.url().includes("/items") && r.request().method() === "GET",
       { timeout: 15_000 },
@@ -114,7 +122,6 @@ test.describe("Lists (real backend)", () => {
     await page.waitForSelector('header[role="banner"]', { timeout: 10_000 });
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await itemsResp2;
-    await expect(page.getByLabel("Titre").last()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByLabel("Titre").last()).toHaveValue(ITEM_NAME);
+    await expect(page.getByText(ITEM_NAME)).toBeVisible({ timeout: 10_000 });
   });
 });
