@@ -204,7 +204,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label={t("ui.modal.close")}
-            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-text-muted transition-colors hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-text-muted transition-colors hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
           >
             ✕
           </button>
