@@ -254,7 +254,7 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
 
       {/* Footer: delete */}
       <hr className="border-border" />
-      <div className="flex justify-between items-center">
+      <div className="flex items-center">
         {!confirmDelete ? (
           <Button
             type="button"
@@ -287,10 +287,6 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
             </Button>
           </div>
         )}
-
-        <Button type="button" variant="secondary" onClick={onClose}>
-          {t("ui.modal.close")}
-        </Button>
       </div>
     </div>
   );

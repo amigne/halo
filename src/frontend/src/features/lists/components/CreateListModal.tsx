@@ -208,10 +208,7 @@ export function CreateListModal({ onClose }: CreateListModalProps) {
       )}
 
       {/* Submit */}
-      <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="secondary" onClick={onClose}>
-          {t("ui.modal.close")}
-        </Button>
+      <div className="flex justify-end pt-2">
         <Button type="submit" disabled={submitting || !title.trim()}>
           {submitting ? t("ui.button.loading") : t("lists.createModal.submit")}
         </Button>

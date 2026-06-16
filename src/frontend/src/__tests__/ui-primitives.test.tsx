@@ -85,15 +85,15 @@ describe("Button", () => {
     expect(screen.getByRole("button", { name: "Nope" })).toBeDisabled();
   });
 
-  it("has touch target ≥ 44×44px via min-h/min-w classes", () => {
+  it("has touch target ≥ 44px on coarse pointers only (U-014)", () => {
     render(
       <I18nWrapper>
         <Button>Touch</Button>
       </I18nWrapper>,
     );
     const btn = screen.getByRole("button", { name: "Touch" });
-    expect(btn.className).toContain("min-h-[44px]");
-    expect(btn.className).toContain("min-w-[44px]");
+    // min-height ≥ 44px applies only on coarse (touch) pointers
+    expect(btn.className).toContain("[@media(pointer:coarse)]:min-h-11");
   });
 
   it("has focus-visible ring class", () => {
