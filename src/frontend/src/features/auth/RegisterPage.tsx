@@ -9,15 +9,24 @@ export function RegisterPage() {
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const mismatch = confirm.length > 0 && confirm !== password;
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (password !== confirm) {
+      setError(t("auth.passwordMismatch"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -107,9 +116,48 @@ export function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded border border-border bg-surface px-3 py-2"
           />
+          <p className="mt-1 text-xs text-text-muted">
+            {t("auth.passwordHint")}
+          </p>
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button type="submit" disabled={loading} className="w-full">
+        <div>
+          <label
+            className="block text-sm font-medium"
+            htmlFor="reg-password-confirm"
+          >
+            {t("auth.confirmPassword")}
+          </label>
+          <input
+            id="reg-password-confirm"
+            type="password"
+            required
+            minLength={8}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            aria-invalid={mismatch || undefined}
+            aria-describedby={
+              mismatch ? "reg-password-confirm-err" : undefined
+            }
+            className={`w-full rounded border bg-surface px-3 py-2 ${
+              mismatch ? "border-danger" : "border-border"
+            }`}
+          />
+          {mismatch && (
+            <p
+              id="reg-password-confirm-err"
+              role="alert"
+              className="mt-1 text-sm text-danger"
+            >
+              {t("auth.passwordMismatch")}
+            </p>
+          )}
+        </div>
+        {error && <p className="text-sm text-danger">{error}</p>}
+        <Button
+          type="submit"
+          disabled={loading || mismatch || !password || !confirm}
+          className="w-full"
+        >
           {loading ? <Spinner /> : t("auth.registerButton")}
         </Button>
       </form>
