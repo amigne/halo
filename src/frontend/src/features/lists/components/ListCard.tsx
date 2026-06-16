@@ -60,7 +60,7 @@ export function ListCard({ list, typeLabel, onClick }: ListCardProps) {
     <button
       type="button"
       onClick={() => onClick(list.id)}
-      className="flex flex-col gap-3 p-4 rounded-lg border border-border bg-surface hover:bg-border transition-colors text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none"
+      className="card flex flex-col gap-3 p-4 hover:bg-border transition-colors text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none"
     >
       <div className="flex items-center gap-3">
         <IconPreview iconKey={list.icon} />

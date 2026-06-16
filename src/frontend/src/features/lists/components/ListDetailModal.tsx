@@ -287,10 +287,6 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
             </Button>
           </div>
         )}
-
-        <Button type="button" variant="secondary" onClick={onClose}>
-          {t("ui.modal.close")}
-        </Button>
       </div>
     </div>
   );

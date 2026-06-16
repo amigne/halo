@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { Button } from "./Button";
 
 // ── Focusable selector ───────────────────────────────────────────────────────
 
@@ -200,14 +201,14 @@ export function Modal({
           <h2 id={titleId} className="text-lg font-semibold text-text">
             {title}
           </h2>
-          <button
-            type="button"
+          <Button
+            size="icon"
+            variant="ghost"
             onClick={onClose}
             aria-label={t("ui.modal.close")}
-            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-text-muted transition-colors hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none"
           >
             ✕
-          </button>
+          </Button>
         </div>
 
         {/* Body */}

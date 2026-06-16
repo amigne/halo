@@ -12,13 +12,14 @@ export function Footer() {
 
   return (
     <footer
-      className="flex items-center justify-between border-t border-border bg-surface px-4 py-3 text-xs text-text-muted"
+      className="border-t border-border bg-surface px-4 py-1 text-center text-xs text-text-muted"
       role="contentinfo"
     >
       <span>{t("layout.footer.copyright")}</span>
+      {" · "}
       <Link
         to={t("layout.footer.privacyUrl")}
-        className="text-text-muted hover:text-text underline focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none rounded-sm min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="underline underline-offset-2 hover:text-text focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none rounded-sm"
       >
         {t("layout.footer.privacy")}
       </Link>
