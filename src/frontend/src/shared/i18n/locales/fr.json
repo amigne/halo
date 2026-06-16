@@ -76,7 +76,8 @@
     "error": "Une erreur est survenue",
     "fieldRequired": "Ce champ est requis",
     "passwordMinLength": "8 caractères minimum",
-    "passwordMismatch": "Les mots de passe ne correspondent pas"
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "passwordHint": "Au moins 8 caractères."
   },
   "demo": {
     "greeting": "Bonjour {{name}} !",

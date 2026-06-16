@@ -76,7 +76,8 @@
     "error": "An error occurred",
     "fieldRequired": "This field is required",
     "passwordMinLength": "Minimum 8 characters",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "passwordHint": "At least 8 characters."
   },
   "demo": {
     "greeting": "Hello {{name}}!",
