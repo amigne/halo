@@ -1,7 +1,7 @@
-import { type InputHTMLAttributes, useId } from "react";
+import { type TextareaHTMLAttributes, useId } from "react";
 
-interface InputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "id"> {
+interface TextareaProps
+  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "id"> {
   /** HTML id for label association. Auto-generated if omitted. */
   id?: string;
   /** Visible label text. */
@@ -11,21 +11,22 @@ interface InputProps
 }
 
 /**
- * Accessible text input with label and error state.
+ * Accessible multiline text input with label and error state.
  *
  * - Label associated via `htmlFor`/`id`
  * - `aria-invalid` + `aria-describedby` when error is present
  * - Error message with `role="alert"` for live announcement
- * - Focus ring uses `.focus-ring` (--color-focus-ring token)
+ * - Focus ring uses tokens (--color-focus-ring)
  * - Touch target ≥ 44px on coarse pointers only
  */
-export function Input({
+export function Textarea({
   id: propId,
   label,
   error,
   className = "",
+  rows = 4,
   ...props
-}: InputProps) {
+}: TextareaProps) {
   const generatedId = useId();
   const id = propId ?? generatedId;
   const errorId = `${id}-error`;
@@ -38,11 +39,12 @@ export function Input({
       >
         {label}
       </label>
-      <input
+      <textarea
         id={id}
+        rows={rows}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className={`w-full rounded-md border bg-surface px-3 py-2 text-sm placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none [@media(pointer:coarse)]:min-h-11 ${
+        className={`w-full rounded-md border bg-surface px-3 py-2 text-sm placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none resize-vertical [@media(pointer:coarse)]:min-h-11 ${
           error ? "border-danger" : "border-border-strong"
         } ${className}`}
         {...props}

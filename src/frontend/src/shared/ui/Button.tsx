@@ -14,21 +14,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-primary-contrast hover:opacity-90 focus-visible:ring-focus-ring",
+    "bg-primary text-primary-contrast hover:bg-primary-700 active:bg-primary-800",
   secondary:
-    "bg-surface text-text border border-border hover:bg-border focus-visible:ring-focus-ring",
+    "bg-surface text-text border border-border-strong hover:bg-bg",
   danger:
-    "bg-danger text-primary-contrast hover:opacity-90 focus-visible:ring-focus-ring",
+    "bg-danger text-primary-contrast hover:bg-danger-700",
   ghost:
-    "bg-transparent text-text-muted hover:bg-surface focus-visible:ring-focus-ring",
+    "text-text-muted hover:bg-bg",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
   sm: "px-2.5 py-1 text-xs rounded",
   md: "px-4 py-2 text-sm rounded-md",
   lg: "px-6 py-3 text-base rounded-lg",
-  icon:
-    "h-9 w-9 rounded-md [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11",
+  icon: "h-9 w-9 rounded-md [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11",
 };
 
 /**
@@ -39,7 +38,7 @@ const sizeClasses: Record<ButtonSize, string> = {
  * - `loading` displays Spinner + disables the button + sets aria-busy
  * - Touch target ≥ 44px on coarse pointers only (U-014)
  * - Fine pointer: natural height (~32-40px), no forced minimum
- * - Focus-visible ring uses `--color-focus-ring`
+ * - Focus ring uses `.focus-ring` (--color-focus-ring token)
  */
 export function Button({
   variant = "primary",
@@ -56,7 +55,7 @@ export function Button({
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer [@media(pointer:coarse)]:min-h-11 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 disabled:opacity-60 disabled:pointer-events-none cursor-pointer [@media(pointer:coarse)]:min-h-11 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       disabled={isDisabled}
       aria-busy={loading || undefined}
       {...props}
