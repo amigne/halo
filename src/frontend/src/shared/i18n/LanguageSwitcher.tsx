@@ -11,7 +11,7 @@ export function LanguageSwitcher() {
 
   return (
     <div className="flex items-center gap-1 text-sm">
-      <span className="text-foreground-muted">{t("language.switchTo")}:</span>
+      <span className="text-text-muted">{t("language.switchTo")}:</span>
       {LANGS.map(({ code, labelKey }) => (
         <Button
           key={code}

@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AutosaveField } from "@/shared/autosave/AutosaveField";
+import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { IconPicker } from "@/shared/ui/IconPicker";
 import { Spinner } from "@/shared/ui/Spinner";
@@ -193,19 +194,20 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
           />
         </div>
 
-        <span
-          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium shrink-0 mt-6 ${
+        <Badge
+          variant={
             list.list_type === "tasks"
-              ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+              ? "primary"
               : list.list_type === "checklist"
-                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                ? "success"
                 : list.list_type === "ideas"
-                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
-          }`}
+                  ? "warning"
+                  : "neutral"
+          }
+          className="shrink-0 mt-6"
         >
           {t(`lists.type.${list.list_type}`)}
-        </span>
+        </Badge>
       </div>
 
       {/* Divider */}
@@ -266,7 +268,7 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
           </Button>
         ) : (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-red-600 dark:text-red-400">
+            <span className="text-sm text-danger">
               {t("lists.detailModal.deleteConfirm")}
             </span>
             <Button

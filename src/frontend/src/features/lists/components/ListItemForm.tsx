@@ -6,6 +6,7 @@ import { SaveIndicator } from "@/shared/autosave/SaveIndicator";
 import { DateTimePicker } from "@/shared/ui/DateTimePicker";
 import { Select } from "@/shared/ui/Select";
 import { TagEditor } from "@/shared/ui/TagEditor";
+import { Badge, type BadgeVariant } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { useToast } from "@/shared/ui/Toast";
 import { getIconPath } from "@/shared/ui/icon-data";
@@ -51,15 +52,16 @@ function getPriorityLabel(
   return t(keys[priority] ?? "");
 }
 
-function getPriorityColor(priority: number | null | undefined): string {
-  if (priority == null) return "";
-  const colors = [
-    "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200", // Low
-    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200", // Medium
-    "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200", // High
-    "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200", // Urgent
-  ];
-  return colors[priority] ?? "";
+const PRIORITY_VARIANT: Record<number, BadgeVariant> = {
+  0: "neutral",  // Low
+  1: "primary",  // Medium
+  2: "warning",  // High
+  3: "danger",   // Urgent
+};
+
+function getPriorityBadge(priority: number | null | undefined): BadgeVariant | null {
+  if (priority == null) return null;
+  return PRIORITY_VARIANT[priority] ?? null;
 }
 
 // ── Due date helpers ───────────────────────────────────────────────────────────
@@ -257,13 +259,11 @@ export function ListItemForm({
           {item.title || " "}
         </span>
 
-        {/* Priority chip — only if value exists AND field is in schema */}
+        {/* Priority badge — only if value exists AND field is in schema */}
         {item.priority != null && hasField("priority") && (
-          <span
-            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ${getPriorityColor(item.priority)}`}
-          >
+          <Badge variant={getPriorityBadge(item.priority) ?? "neutral"}>
             {getPriorityLabel(item.priority, t)}
-          </span>
+          </Badge>
         )}
 
         {/* Due date chip — only if value exists AND field is in schema */}
@@ -271,7 +271,7 @@ export function ListItemForm({
           <span
             className={`inline-flex items-center gap-1 text-xs shrink-0 ${
               isOverdue(item.due_at)
-                ? "text-red-600 dark:text-red-400 font-medium"
+                ? "text-danger font-medium"
                 : "text-text-muted"
             }`}
           >

@@ -27,7 +27,7 @@ export function ForgotPasswordPage() {
       <div className="mx-auto max-w-sm space-y-4 p-4 text-center">
         <h1 className="text-2xl font-bold">{t("auth.checkEmail")}</h1>
         <p>{t("auth.resetEmailSent")}</p>
-        <Link to="/login" className="text-blue-600 hover:underline">
+        <Link to="/login" className="text-primary hover:underline">
           {t("auth.login")}
         </Link>
       </div>
@@ -56,7 +56,7 @@ export function ForgotPasswordPage() {
         </Button>
       </form>
       <p className="text-center text-sm">
-        <Link to="/login" className="text-blue-600 hover:underline">
+        <Link to="/login" className="text-primary hover:underline">
           {t("auth.login")}
         </Link>
       </p>
