@@ -1,29 +1,52 @@
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
-import { IconPicker } from "@/shared/ui/IconPicker";
 import { Spinner } from "@/shared/ui/Spinner";
 import { EmptyState } from "@/shared/ui/EmptyState";
 import { useRoutedModal } from "@/shared/modal";
-import { useAuth } from "@/features/auth/auth-store";
 import { useToast } from "@/shared/ui/Toast";
-import {
-  fetchList,
-  fetchItems,
-  updateList,
-  deleteList,
-  updateItem,
-} from "../api";
+import { getIconPath } from "@/shared/ui/icon-data";
+import { fetchList, fetchItems, updateItem } from "../api";
 import { ListItemRow } from "./ListItemRow";
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
 interface ListDetailModalProps {
   onClose: () => void;
-  /** The full modal key when prefix-matched, e.g. "list/019ea184-...". */
+  /** The full key when prefix-matched, e.g. "list/019ea184-...". */
   modalKey?: string;
+}
+
+// ── Icon preview ───────────────────────────────────────────────────────────────
+
+function IconPreview({ iconKey }: { iconKey: string | null }) {
+  const path = iconKey ? getIconPath(iconKey) : null;
+  return (
+    <div
+      className="flex items-center justify-center w-10 h-10 rounded-md border border-border bg-surface shrink-0"
+      aria-hidden="true"
+    >
+      {path ? (
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d={path} />
+        </svg>
+      ) : (
+        <span className="text-lg text-text-muted opacity-40">+</span>
+      )}
+    </div>
+  );
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -31,85 +54,33 @@ interface ListDetailModalProps {
 /**
  * ListDetailModal — read-only list view with item rows.
  *
- * Registered as a prefix-modal (`registerModal("list/", ...)`) so that
- * navigating to `?modal=list/<uuid>` opens this component with `modalKey`
- * set to the full key.
- *
- * Features:
- * - Read-only title and icon (editing will be handled via card menu in ui-6)
- * - Read-only item rows (ListItemRow) — click opens dedicated item modal
+ * - Header: icon + title (read-only), type badge, item count
+ * - Body: read-only item rows (ListItemRow), click opens `list-item/<id>` modal
  * - "Add item" button opens `list-item/new` modal
- * - Delete list button with confirmation
+ * - No list-level editing (title/icon/delete) — that lives in EditListModal
  */
-export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
+export function ListDetailModal({ onClose: _onClose, modalKey }: ListDetailModalProps) {
+  void _onClose; // used by ModalHost shell (✕ button / Escape)
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { openModal } = useRoutedModal();
   const { addToast } = useToast();
-  const { data: auth } = useAuth();
-  const timezone = auth?.user?.timezone ?? "UTC";
 
-  // Validate and sanitize the list ID from the URL to prevent path traversal
   const rawId = modalKey?.replace(/^list\//, "") ?? "";
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const listId = UUID_RE.test(rawId) ? rawId : "";
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // ── Data fetching ────────────────────────────────────────────────────────
-
-  const {
-    data: list,
-    isLoading: listLoading,
-  } = useQuery({
+  const { data: list, isLoading: listLoading } = useQuery({
     queryKey: ["list", listId],
     queryFn: () => fetchList(listId),
     enabled: !!listId,
   });
 
-  const {
-    data: items,
-    isLoading: itemsLoading,
-  } = useQuery({
+  const { data: items, isLoading: itemsLoading } = useQuery({
     queryKey: ["list-items", listId],
     queryFn: () => fetchItems(listId),
     enabled: !!listId,
   });
-
-  // ── Icon change ──────────────────────────────────────────────────────────
-
-  const handleIconChange = useCallback(
-    async (iconKey: string) => {
-      try {
-        await updateList(listId, { icon: iconKey || null });
-        queryClient.invalidateQueries({ queryKey: ["list", listId] });
-        queryClient.invalidateQueries({ queryKey: ["lists"] });
-      } catch (err) {
-        addToast(
-          "error",
-          err instanceof Error ? err.message : t("lists.error.update"),
-        );
-      }
-    },
-    [listId, queryClient, addToast, t],
-  );
-
-  // ── Delete list ──────────────────────────────────────────────────────────
-
-  const handleDelete = useCallback(async () => {
-    try {
-      await deleteList(listId);
-      queryClient.invalidateQueries({ queryKey: ["lists"] });
-      addToast("success", t("lists.detailModal.deleted"));
-      onClose();
-    } catch (err) {
-      addToast(
-        "error",
-        err instanceof Error ? err.message : t("lists.error.delete"),
-      );
-    }
-  }, [listId, queryClient, addToast, t, onClose]);
-
-  // ── Toggle item done ─────────────────────────────────────────────────────
 
   const handleToggleDone = useCallback(
     async (itemId: string, checked: boolean) => {
@@ -117,85 +88,50 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
         await updateItem(listId, itemId, { is_done: checked });
         queryClient.invalidateQueries({ queryKey: ["list-items", listId] });
       } catch (err) {
-        addToast(
-          "error",
-          err instanceof Error ? err.message : t("lists.error.update"),
-        );
+        addToast("error", err instanceof Error ? err.message : t("lists.error.update"));
       }
     },
     [listId, queryClient, addToast, t],
   );
 
-  // ── Loading state ────────────────────────────────────────────────────────
+  // ── Loading / error states ─────────────────────────────────────────────────
 
   if (!listId) {
-    return (
-      <div className="py-8 text-center text-text-muted">
-        {t("lists.error.invalidId")}
-      </div>
-    );
+    return <div className="py-8 text-center text-text-muted">{t("lists.error.invalidId")}</div>;
   }
-
   if (listLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Spinner />
-      </div>
-    );
+    return <div className="flex items-center justify-center py-12"><Spinner /></div>;
   }
-
   if (!list) {
-    return (
-      <div className="py-8 text-center text-text-muted">
-        {t("lists.error.notFound")}
-      </div>
-    );
+    return <div className="py-8 text-center text-text-muted">{t("lists.error.notFound")}</div>;
   }
 
-  // field_schema is a dict like {"fields": [...]} — extract the fields array
   const rawSchema = list.field_schema as { fields?: Array<{ key: string; type: string; required?: boolean }> } | null;
-  const fieldSchema: Array<{ key: string; type: string; required?: boolean }> =
-    rawSchema?.fields ?? [];
+  const fieldSchema = rawSchema?.fields ?? [];
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header: title + icon + type badge */}
+      {/* Header: icon + title (read-only) + type badge */}
       <div className="flex items-start gap-4">
+        <IconPreview iconKey={list.icon} />
         <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold text-text truncate">
-            {list.title}
-          </h2>
+          <h2 className="text-lg font-semibold text-text truncate">{list.title}</h2>
         </div>
-
-        <div className="flex flex-col items-center gap-1 shrink-0">
-          <span className="text-xs font-medium text-text-muted">
-            {t("lists.createModal.iconLabel")}
-          </span>
-          <IconPicker
-            value={list.icon ?? ""}
-            onChange={handleIconChange}
-          />
-        </div>
-
         <Badge
           variant={
-            list.list_type === "tasks"
-              ? "primary"
-              : list.list_type === "checklist"
-                ? "success"
-                : list.list_type === "ideas"
-                  ? "warning"
-                  : "neutral"
+            list.list_type === "tasks" ? "primary"
+            : list.list_type === "checklist" ? "success"
+            : list.list_type === "ideas" ? "warning"
+            : "neutral"
           }
-          className="shrink-0 mt-6"
+          className="shrink-0 mt-0.5"
         >
           {t(`lists.type.${list.list_type}`)}
         </Badge>
       </div>
 
-      {/* Divider */}
       <hr className="border-border" />
 
       {/* Items section */}
@@ -204,18 +140,13 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
           <h3 className="text-sm font-semibold text-text">
             {t("lists.detailModal.items", { count: items?.length ?? 0 })}
           </h3>
-          <Button
-            size="sm"
-            onClick={() => openModal("list-item/new")}
-          >
+          <Button size="sm" onClick={() => openModal("list-item/new")}>
             {t("lists.detailModal.addItem")}
           </Button>
         </div>
 
         {itemsLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Spinner />
-          </div>
+          <div className="flex items-center justify-center py-8"><Spinner /></div>
         ) : !items || items.length === 0 ? (
           <EmptyState
             title={t("lists.detailModal.noItems")}
@@ -233,48 +164,11 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
                 key={item.id}
                 item={item}
                 fieldSchema={fieldSchema}
-                timezone={timezone}
+                timezone="UTC"
                 onToggleDone={handleToggleDone}
                 onClick={(itemId) => openModal(`list-item/${itemId}`)}
               />
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* Footer: delete */}
-      <hr className="border-border" />
-      <div className="flex items-center">
-        {!confirmDelete ? (
-          <Button
-            type="button"
-            variant="danger"
-            size="sm"
-            onClick={() => setConfirmDelete(true)}
-          >
-            {t("lists.detailModal.delete")}
-          </Button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-danger">
-              {t("lists.detailModal.deleteConfirm")}
-            </span>
-            <Button
-              type="button"
-              variant="danger"
-              size="sm"
-              onClick={handleDelete}
-            >
-              {t("lists.detailModal.deleteConfirmYes")}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => setConfirmDelete(false)}
-            >
-              {t("lists.detailModal.deleteConfirmNo")}
-            </Button>
           </div>
         )}
       </div>

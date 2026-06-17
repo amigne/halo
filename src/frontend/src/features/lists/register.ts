@@ -1,5 +1,6 @@
 import { registerModal } from "@/shared/modal";
 import { CreateListModal } from "./components/CreateListModal";
+import { EditListModal } from "./components/EditListModal";
 import { ListDetailModal } from "./components/ListDetailModal";
 import { ListItemModal } from "./components/ListItemModal";
 
@@ -10,11 +11,13 @@ import { ListItemModal } from "./components/ListItemModal";
  * ensuring modals are registered before ModalHost renders.
  *
  * - `create-list`     → CreateListModal (exact match)
- * - `list/`           → ListDetailModal (prefix match — renders for `list/<uuid>`)
+ * - `edit-list/`      → EditListModal (prefix match — `edit-list/<uuid>`)
+ * - `list/`           → ListDetailModal (prefix match — `list/<uuid>`)
  * - `list-item/`      → ListItemModal (prefix match — `list-item/<uuid>` or `list-item/new`)
  */
 export function registerModals(): void {
   registerModal("create-list", CreateListModal, "lists.createModal.title");
+  registerModal("edit-list/", EditListModal, "lists.editModal.title");
   registerModal("list/", ListDetailModal, "lists.detailModal.title");
   registerModal("list-item/", ListItemModal, "lists.itemModal.title");
 }
