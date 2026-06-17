@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "./Button";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -48,10 +49,10 @@ let toastCounter = 0;
 const DEFAULT_DURATION = 5000; // 5 seconds
 
 const typeStyles: Record<ToastType, string> = {
-  info: "border-primary bg-surface text-text",
-  success: "border-success bg-surface text-text",
-  error: "border-danger bg-surface text-text",
-  warning: "border-warning bg-surface text-text",
+  info: "border-l-primary bg-surface text-text",
+  success: "border-l-success bg-surface text-text",
+  error: "border-l-danger bg-surface text-text",
+  warning: "border-l-warning bg-surface text-text",
 };
 
 const typeIcons: Record<ToastType, string> = {
@@ -121,20 +122,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div
             key={toast.id}
             role={toast.type === "error" || toast.type === "warning" ? "alert" : "status"}
-            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-md border-l-4 shadow-md min-w-[280px] max-w-sm ${typeStyles[toast.type]}`}
+            className={`pointer-events-auto flex items-center gap-3 p-3 rounded-md border-l-4 shadow-md min-w-[280px] max-w-sm text-sm ${typeStyles[toast.type]}`}
           >
-            <span aria-hidden="true" className="text-lg shrink-0">
+            <span aria-hidden="true" className="text-base shrink-0">
               {typeIcons[toast.type]}
             </span>
-            <span className="flex-1 text-sm">{toast.message}</span>
-            <button
-              type="button"
+            <span className="flex-1">{toast.message}</span>
+            <Button
+              size="icon"
+              variant="ghost"
               onClick={() => removeToast(toast.id)}
               aria-label={t("ui.toast.close")}
-              className="shrink-0 p-1 rounded-sm text-text-muted hover:text-text focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none cursor-pointer"
             >
               ✕
-            </button>
+            </Button>
           </div>
         ))}
       </div>

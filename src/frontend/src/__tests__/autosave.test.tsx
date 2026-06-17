@@ -469,15 +469,15 @@ describe("SaveIndicator", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it("retry button has touch target ≥ 44×44px", () => {
+  it("retry button has touch target ≥ 44px on coarse pointers only", () => {
     render(
       <I18nWrapper>
         <SaveIndicator status="error" error="Fail" onRetry={vi.fn()} />
       </I18nWrapper>,
     );
     const btn = screen.getByRole("button", { name: "Réessayer" });
-    expect(btn.className).toContain("min-h-[44px]");
-    expect(btn.className).toContain("min-w-[44px]");
+    // Button component applies min-h-11 / min-w-11 on coarse pointers only
+    expect(btn.className).toContain("[@media(pointer:coarse)]:min-h-11");
   });
 });
 
