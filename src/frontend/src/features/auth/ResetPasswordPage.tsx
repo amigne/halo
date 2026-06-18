@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch, Link } from "@tanstack/react-router";
 import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 import { Spinner } from "@/shared/ui/Spinner";
 import { apiMutate } from "@/shared/api/fetch-wrapper";
 
@@ -51,7 +52,7 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="mx-auto max-w-sm space-y-4 p-4 text-center">
+      <div className="text-center">
         <p>{t("auth.invalidLink")}</p>
       </div>
     );
@@ -59,11 +60,11 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="mx-auto max-w-sm space-y-4 p-4 text-center">
-        <h1 className="text-2xl font-bold text-success">
+      <div className="text-center space-y-4">
+        <h2 className="text-lg font-semibold text-success">
           {t("auth.passwordReset")}
-        </h1>
-        <p>{t("auth.passwordResetMessage")}</p>
+        </h2>
+        <p className="text-text-muted">{t("auth.passwordResetMessage")}</p>
         <Link to="/login" className="text-primary hover:underline">
           {t("auth.login")}
         </Link>
@@ -72,42 +73,32 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 p-4">
-      <h1 className="text-2xl font-bold">{t("auth.setNewPassword")}</h1>
+    <>
+      <h2 className="text-lg font-semibold">{t("auth.setNewPassword")}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium" htmlFor="rp-password">
-            {t("auth.newPassword")}
-          </label>
-          <input
-            id="rp-password"
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium" htmlFor="rp-confirm">
-            {t("auth.confirmPassword")}
-          </label>
-          <input
-            id="rp-confirm"
-            type="password"
-            required
-            minLength={8}
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
+        <Input
+          id="rp-password"
+          label={t("auth.newPassword")}
+          type="password"
+          required
+          minLength={8}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <Input
+          id="rp-confirm"
+          label={t("auth.confirmPassword")}
+          type="password"
+          required
+          minLength={8}
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+        />
         {error && <p className="text-sm text-danger">{error}</p>}
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? <Spinner /> : t("auth.setNewPassword")}
         </Button>
       </form>
-    </div>
+    </>
   );
 }
