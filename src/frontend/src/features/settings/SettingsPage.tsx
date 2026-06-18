@@ -15,6 +15,7 @@ import { useTheme } from "@/shared/theme/use-theme";
 import { useLanguage } from "@/shared/i18n/use-language";
 import { apiMutate } from "@/shared/api/fetch-wrapper";
 import { AutosaveField } from "@/shared/autosave/AutosaveField";
+import { Card } from "@/shared/ui/Card";
 import { Select } from "@/shared/ui/Select";
 import { Toggle } from "@/shared/ui/Toggle";
 import { useToast } from "@/shared/ui/Toast";
@@ -334,7 +335,7 @@ export function SettingsPage() {
           {t("settings.identity.title")}
         </h2>
 
-        <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
+        <Card className="space-y-4">
           <AutosaveField
             label={t("settings.identity.firstName")}
             value={user.first_name}
@@ -359,13 +360,13 @@ export function SettingsPage() {
               value={user.email}
               readOnly
               disabled
-              className="min-h-[44px] w-full px-3 py-2 rounded-md border bg-surface text-text-muted opacity-60 border-border"
+              className="w-full px-3 py-2 rounded-md border bg-surface text-text-muted opacity-60 border-border [@media(pointer:coarse)]:min-h-11"
             />
             <p className="text-xs text-text-muted">
               {t("settings.identity.emailReadonly")}
             </p>
           </div>
-        </div>
+        </Card>
       </section>
 
       {/* ── Appearance ─────────────────────────────────────────────────── */}
@@ -377,7 +378,7 @@ export function SettingsPage() {
           {t("settings.appearance.title")}
         </h2>
 
-        <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
+        <Card className="space-y-4">
           <Select
             label={t("settings.appearance.theme")}
             value={pref}
@@ -391,7 +392,7 @@ export function SettingsPage() {
             onChange={handleLangChange}
             options={langOptions}
           />
-        </div>
+        </Card>
       </section>
 
       {/* ── Timezone ───────────────────────────────────────────────────── */}
@@ -403,7 +404,7 @@ export function SettingsPage() {
           {t("settings.timezone.title")}
         </h2>
 
-        <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
+        <Card className="space-y-4">
           <Select
             label={t("settings.timezone.label")}
             value={effectiveTz}
@@ -417,14 +418,14 @@ export function SettingsPage() {
               {t("settings.timezone.preview")}
             </span>
             <div
-              className="min-h-[44px] flex items-center px-3 py-2 rounded-md border border-border bg-bg text-text"
+              className="flex items-center px-3 py-2 rounded-md border border-border bg-bg text-text [@media(pointer:coarse)]:min-h-11"
               aria-live="polite"
               aria-label={t("settings.timezone.currentTime")}
             >
               {nowPreview || "—"}
             </div>
           </div>
-        </div>
+        </Card>
       </section>
 
       {/* ── Notification preferences (scaffold — no emission) ──────────── */}
@@ -439,7 +440,7 @@ export function SettingsPage() {
           {t("settings.notifications.description")}
         </p>
 
-        <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <Card className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
@@ -486,7 +487,7 @@ export function SettingsPage() {
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
       </section>
     </main>
   );
