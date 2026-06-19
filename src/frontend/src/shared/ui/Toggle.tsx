@@ -18,7 +18,8 @@ interface ToggleProps {
  *
  * - `role="switch"` + `aria-checked` for screen readers
  * - Label is clickable via `htmlFor`
- * - Focus ring uses `--color-focus-ring`
+ * - Focus ring uses tokens (--color-focus-ring)
+ * - Transition ≤ 180ms for smooth state changes
  * - Respects `prefers-reduced-motion` via the global CSS rule
  */
 export function Toggle({
@@ -40,13 +41,13 @@ export function Toggle({
         aria-checked={checked}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 focus-visible:outline-none disabled:opacity-50 disabled:pointer-events-none cursor-pointer ${
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none cursor-pointer ${
           checked ? "bg-primary" : "bg-border"
         }`}
       >
         <span
-          className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-6" : "translate-x-1"
+          className={`inline-block h-4 w-4 rounded-full bg-white transition-transform duration-150 ease-out ${
+            checked ? "translate-x-[1.125rem]" : "translate-x-0.5"
           }`}
         />
       </button>

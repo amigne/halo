@@ -60,7 +60,7 @@ describe("Button", () => {
     );
     const btn = screen.getByRole("button", { name: "Cancel" });
     expect(btn.className).toContain("text-text-muted");
-    expect(btn.className).toContain("bg-transparent");
+    expect(btn.className).toContain("hover:bg-bg");
   });
 
   it("displays Spinner and sets aria-busy when loading", () => {

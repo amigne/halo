@@ -1,6 +1,7 @@
 export { Button } from "./Button";
 export { Input } from "./Input";
 export { Select } from "./Select";
+export { Textarea } from "./Textarea";
 export { ToastProvider, useToast } from "./Toast";
 export type { Toast, ToastType } from "./Toast";
 export { Tooltip } from "./Tooltip";
