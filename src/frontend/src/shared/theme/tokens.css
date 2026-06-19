@@ -34,26 +34,50 @@
 
   /* Success */
   --color-success-50: #f0fdf4;
+  --color-success-300: #86efac;
   --color-success-500: #22c55e;
   --color-success-600: #16a34a;
   --color-success-700: #15803d;
+  --color-success-900: #14532d;
 
   /* Warning */
   --color-warning-50: #fffbeb;
+  --color-warning-300: #fcd34d;
   --color-warning-500: #f59e0b;
   --color-warning-600: #d97706;
   --color-warning-700: #b45309;
+  --color-warning-900: #78350f;
 
   /* Danger */
   --color-danger-50: #fef2f2;
+  --color-danger-300: #fca5a5;
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
   --color-danger-700: #b91c1c;
+  --color-danger-900: #7f1d1d;
 
   /* Info */
   --color-info-50: #eff6ff;
+  --color-info-300: #93c5fd;
   --color-info-500: #3b82f6;
   --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     Badge — fond/texte par variante (clair : 50/700)
+     ════════════════════════════════════════════════════════════════════════════ */
+  --badge-neutral-bg: var(--color-bg);
+  --badge-neutral-text: var(--color-text-muted);
+  --badge-primary-bg: var(--color-primary-50);
+  --badge-primary-text: var(--color-primary-700);
+  --badge-success-bg: var(--color-success-50);
+  --badge-success-text: var(--color-success-700);
+  --badge-warning-bg: var(--color-warning-50);
+  --badge-warning-text: var(--color-warning-700);
+  --badge-danger-bg: var(--color-danger-50);
+  --badge-danger-text: var(--color-danger-700);
+  --badge-info-bg: var(--color-info-50);
+  --badge-info-text: var(--color-info-700);
 
   /* ════════════════════════════════════════════════════════════════════════════
      Alias d'usage (jour : 600 pour primary/danger/success/warning)
@@ -153,26 +177,50 @@
 
   /* Success */
   --color-success-50: #f0fdf4;
+  --color-success-300: #86efac;
   --color-success-500: #22c55e;
   --color-success-600: #16a34a;
   --color-success-700: #15803d;
+  --color-success-900: #14532d;
 
   /* Warning */
   --color-warning-50: #fffbeb;
+  --color-warning-300: #fcd34d;
   --color-warning-500: #f59e0b;
   --color-warning-600: #d97706;
   --color-warning-700: #b45309;
+  --color-warning-900: #78350f;
 
   /* Danger */
   --color-danger-50: #fef2f2;
+  --color-danger-300: #fca5a5;
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
   --color-danger-700: #b91c1c;
+  --color-danger-900: #7f1d1d;
 
   /* Info */
   --color-info-50: #eff6ff;
+  --color-info-300: #93c5fd;
   --color-info-500: #3b82f6;
   --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* ════════════════════════════════════════════════════════════════════════════
+     Badge — fond sombre 900/40% + texte 300
+     ════════════════════════════════════════════════════════════════════════════ */
+  --badge-neutral-bg: var(--color-surface-muted);
+  --badge-neutral-text: var(--color-text-muted);
+  --badge-primary-bg: color-mix(in srgb, var(--color-primary-900) 40%, transparent);
+  --badge-primary-text: var(--color-primary-300);
+  --badge-success-bg: color-mix(in srgb, var(--color-success-900) 40%, transparent);
+  --badge-success-text: var(--color-success-300);
+  --badge-warning-bg: color-mix(in srgb, var(--color-warning-900) 40%, transparent);
+  --badge-warning-text: var(--color-warning-300);
+  --badge-danger-bg: color-mix(in srgb, var(--color-danger-900) 40%, transparent);
+  --badge-danger-text: var(--color-danger-300);
+  --badge-info-bg: color-mix(in srgb, var(--color-primary-900) 40%, transparent);
+  --badge-info-text: var(--color-primary-300);
 
   /* ════════════════════════════════════════════════════════════════════════════
      Alias d'usage (nuit : 500 pour primary/danger/success/warning)

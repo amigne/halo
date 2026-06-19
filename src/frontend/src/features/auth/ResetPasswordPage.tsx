@@ -60,11 +60,11 @@ export function ResetPasswordPage() {
   if (done) {
     return (
       <div className="mx-auto max-w-sm space-y-4 p-4 text-center">
-        <h1 className="text-2xl font-bold text-green-600">
+        <h1 className="text-2xl font-bold text-success">
           {t("auth.passwordReset")}
         </h1>
         <p>{t("auth.passwordResetMessage")}</p>
-        <Link to="/login" className="text-blue-600 hover:underline">
+        <Link to="/login" className="text-primary hover:underline">
           {t("auth.login")}
         </Link>
       </div>
@@ -103,7 +103,7 @@ export function ResetPasswordPage() {
             className="w-full rounded border border-border bg-surface px-3 py-2"
           />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? <Spinner /> : t("auth.setNewPassword")}
         </Button>

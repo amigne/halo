@@ -47,7 +47,7 @@ export function TagEditor({
     ? "opacity-50 pointer-events-none"
     : "";
 
-  const baseClasses = `min-h-[44px] w-full px-3 py-2 rounded-md border bg-surface text-text placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none border-border ${disabledClasses}`;
+  const baseClasses = `w-full px-3 py-2 rounded-md border bg-surface text-text placeholder:text-text-muted focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none border-border [@media(pointer:coarse)]:min-h-11 ${disabledClasses}`;
 
   const placeholderText =
     placeholder ?? t("ui.tagEditor.placeholder");

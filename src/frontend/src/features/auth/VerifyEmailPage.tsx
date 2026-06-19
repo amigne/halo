@@ -83,18 +83,18 @@ export function VerifyEmailPage() {
       )}
       {status === "success" && (
         <>
-          <h1 className="text-2xl font-bold text-green-600">
+          <h1 className="text-2xl font-bold text-success">
             {t("auth.verified")}
           </h1>
           <p>{t("auth.verifiedMessage")}</p>
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-primary hover:underline">
             {t("auth.login")}
           </Link>
         </>
       )}
       {status === "error" && (
         <>
-          <h1 className="text-2xl font-bold text-red-600">
+          <h1 className="text-2xl font-bold text-danger">
             {t("auth.error")}
           </h1>
           <p>{t("auth.invalidLink")}</p>

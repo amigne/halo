@@ -1,13 +1,14 @@
+import { Badge, type BadgeVariant } from "@/shared/ui/Badge";
 import { getIconPath } from "@/shared/ui/icon-data";
 import type { ListResponse } from "../api";
 
-// ── Type badge colors ──────────────────────────────────────────────────────────
+// ── Type → badge variant mapping ───────────────────────────────────────────────
 
-const TYPE_CLASS: Record<string, string> = {
-  tasks: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  checklist: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  ideas: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  custom: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+const TYPE_VARIANT: Record<string, BadgeVariant> = {
+  tasks: "primary",
+  checklist: "success",
+  ideas: "warning",
+  custom: "neutral",
 };
 
 // ── Small icon renderer ────────────────────────────────────────────────────────
@@ -68,13 +69,9 @@ export function ListCard({ list, typeLabel, onClick }: ListCardProps) {
       </div>
 
       <div className="flex items-center gap-2 mt-auto">
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-            TYPE_CLASS[list.list_type] ?? TYPE_CLASS.custom
-          }`}
-        >
+        <Badge variant={TYPE_VARIANT[list.list_type] ?? "neutral"}>
           {typeLabel}
-        </span>
+        </Badge>
         <span className="text-xs text-text-muted">#{list.ref_no}</span>
       </div>
     </button>

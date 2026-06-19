@@ -71,21 +71,21 @@ export function LoginPage() {
             className="w-full rounded border border-border bg-surface px-3 py-2"
           />
         </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? <Spinner /> : t("auth.loginButton")}
         </Button>
       </form>
       <div className="text-center text-sm space-y-1">
         <p>
-          <Link to="/register" className="text-blue-600 hover:underline">
+          <Link to="/register" className="text-primary hover:underline">
             {t("auth.register")}
           </Link>
         </p>
         <p>
           <Link
             to="/forgot-password"
-            className="text-blue-600 hover:underline"
+            className="text-primary hover:underline"
           >
             {t("auth.forgotPassword")}
           </Link>
