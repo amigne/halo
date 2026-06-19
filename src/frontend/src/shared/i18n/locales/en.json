@@ -193,6 +193,14 @@
     "itemModal": {
       "title": "Item"
     },
+    "editModal": {
+      "title": "Edit list",
+      "delete": "Delete list",
+      "deleted": "List deleted"
+    },
+    "card": {
+      "menu": "Edit list"
+    },
     "error": {
       "fetch": "Failed to load lists",
       "create": "Failed to create",

@@ -193,6 +193,14 @@
     "itemModal": {
       "title": "Élément"
     },
+    "editModal": {
+      "title": "Modifier la liste",
+      "delete": "Supprimer la liste",
+      "deleted": "Liste supprimée"
+    },
+    "card": {
+      "menu": "Modifier la liste"
+    },
     "error": {
       "fetch": "Échec du chargement des listes",
       "create": "Échec de la création",

@@ -37,6 +37,7 @@ export function ListsPage() {
 
   const handleCreate = () => openModal("create-list");
   const handleOpenList = (id: string) => openModal(`list/${id}`);
+  const handleEditList = (id: string) => openModal(`edit-list/${id}`);
 
   const handleRetry = () => {
     queryClient.invalidateQueries({ queryKey: ["lists"] });
@@ -111,7 +112,8 @@ export function ListsPage() {
             key={list.id}
             list={list}
             typeLabel={t(`lists.type.${list.list_type}`)}
-            onClick={handleOpenList}
+            onOpen={handleOpenList}
+            onEdit={handleEditList}
           />
         ))}
       </div>
