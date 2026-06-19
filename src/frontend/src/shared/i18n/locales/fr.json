@@ -7,6 +7,22 @@
     "notFoundHint": "La page que vous cherchez n'existe pas.",
     "goHome": "Retour à l'accueil"
   },
+  "home": {
+    "welcome": "Bonjour {{name}}",
+    "welcomeFallback": "Bonjour",
+    "subtitle": "Gérez vos listes, tâches et idées.",
+    "lists": {
+      "cta": "Mes listes",
+      "create": "Créer une liste",
+      "recent": "Aperçu",
+      "count": "{{count}} liste(s)"
+    },
+    "empty": {
+      "title": "Aucune liste",
+      "cta": "Créer votre première liste"
+    },
+    "error": "Impossible de charger les listes."
+  },
   "theme": {
     "light": "Jour",
     "dark": "Nuit",

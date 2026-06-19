@@ -7,6 +7,22 @@
     "notFoundHint": "The page you are looking for does not exist.",
     "goHome": "Back to home"
   },
+  "home": {
+    "welcome": "Hello {{name}}",
+    "welcomeFallback": "Hello",
+    "subtitle": "Manage your lists, tasks and ideas.",
+    "lists": {
+      "cta": "My lists",
+      "create": "Create a list",
+      "recent": "Overview",
+      "count": "{{count}} list(s)"
+    },
+    "empty": {
+      "title": "No lists yet",
+      "cta": "Create your first list"
+    },
+    "error": "Could not load lists."
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark",
