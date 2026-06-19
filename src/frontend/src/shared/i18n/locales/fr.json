@@ -182,11 +182,16 @@
       "notifyBefore": "Rappel (min)",
       "assignee": "Responsable",
       "delete": "Supprimer l'élément",
+      "deleted": "Élément supprimé",
+      "create": "Créer",
       "done": "Marquer fait",
       "edit": "Modifier",
       "doneEditing": "Terminé",
       "overdue": "En retard",
       "newItemTitle": "Nouvel élément"
+    },
+    "itemModal": {
+      "title": "Élément"
     },
     "error": {
       "fetch": "Échec du chargement des listes",

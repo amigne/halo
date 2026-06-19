@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AutosaveField } from "@/shared/autosave/AutosaveField";
 import { Badge } from "@/shared/ui/Badge";
 import { Button } from "@/shared/ui/Button";
 import { IconPicker } from "@/shared/ui/IconPicker";
 import { Spinner } from "@/shared/ui/Spinner";
 import { EmptyState } from "@/shared/ui/EmptyState";
+import { useRoutedModal } from "@/shared/modal";
 import { useAuth } from "@/features/auth/auth-store";
 import { useToast } from "@/shared/ui/Toast";
 import {
@@ -14,9 +14,9 @@ import {
   fetchItems,
   updateList,
   deleteList,
-  createItem,
+  updateItem,
 } from "../api";
-import { ListItemForm } from "./ListItemForm";
+import { ListItemRow } from "./ListItemRow";
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
@@ -29,22 +29,22 @@ interface ListDetailModalProps {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 /**
- * ListDetailModal — detail/editing view for a single list (U-051, U-054).
+ * ListDetailModal — read-only list view with item rows.
  *
  * Registered as a prefix-modal (`registerModal("list/", ...)`) so that
  * navigating to `?modal=list/<uuid>` opens this component with `modalKey`
  * set to the full key.
  *
  * Features:
- * - Editable title via AutosaveField
- * - Icon picker (saves immediately)
- * - Delete button with confirmation
- * - List of items using ListItemForm
- * - Add-item button
+ * - Read-only title and icon (editing will be handled via card menu in ui-6)
+ * - Read-only item rows (ListItemRow) — click opens dedicated item modal
+ * - "Add item" button opens `list-item/new` modal
+ * - Delete list button with confirmation
  */
 export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const { openModal } = useRoutedModal();
   const { addToast } = useToast();
   const { data: auth } = useAuth();
   const timezone = auth?.user?.timezone ?? "UTC";
@@ -61,7 +61,7 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
     data: list,
     isLoading: listLoading,
   } = useQuery({
-    queryKey: ["lists", listId],
+    queryKey: ["list", listId],
     queryFn: () => fetchList(listId),
     enabled: !!listId,
   });
@@ -70,27 +70,18 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
     data: items,
     isLoading: itemsLoading,
   } = useQuery({
-    queryKey: ["lists", listId, "items"],
+    queryKey: ["list-items", listId],
     queryFn: () => fetchItems(listId),
     enabled: !!listId,
   });
 
-  // ── List mutations ───────────────────────────────────────────────────────
-
-  const patchList = useCallback(
-    async (partial: Record<string, string>) => {
-      await updateList(listId, { title: partial.title });
-      queryClient.invalidateQueries({ queryKey: ["lists", listId] });
-      queryClient.invalidateQueries({ queryKey: ["lists"] });
-    },
-    [listId, queryClient],
-  );
+  // ── Icon change ──────────────────────────────────────────────────────────
 
   const handleIconChange = useCallback(
     async (iconKey: string) => {
       try {
         await updateList(listId, { icon: iconKey || null });
-        queryClient.invalidateQueries({ queryKey: ["lists", listId] });
+        queryClient.invalidateQueries({ queryKey: ["list", listId] });
         queryClient.invalidateQueries({ queryKey: ["lists"] });
       } catch (err) {
         addToast(
@@ -101,6 +92,8 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
     },
     [listId, queryClient, addToast, t],
   );
+
+  // ── Delete list ──────────────────────────────────────────────────────────
 
   const handleDelete = useCallback(async () => {
     try {
@@ -116,27 +109,22 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
     }
   }, [listId, queryClient, addToast, t, onClose]);
 
-  // ── Item mutations ───────────────────────────────────────────────────────
+  // ── Toggle item done ─────────────────────────────────────────────────────
 
-  const handleAddItem = useCallback(async () => {
-    try {
-      await createItem(listId, {
-        title: t("lists.item.newItemTitle"),
-        is_done: false,
-        position: (items?.length ?? 0),
-      });
-      queryClient.invalidateQueries({ queryKey: ["lists", listId, "items"] });
-    } catch (err) {
-      addToast(
-        "error",
-        err instanceof Error ? err.message : t("lists.error.create"),
-      );
-    }
-  }, [listId, items?.length, queryClient, addToast, t]);
-
-  const handleItemDeleted = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["lists", listId, "items"] });
-  }, [listId, queryClient]);
+  const handleToggleDone = useCallback(
+    async (itemId: string, checked: boolean) => {
+      try {
+        await updateItem(listId, itemId, { is_done: checked });
+        queryClient.invalidateQueries({ queryKey: ["list-items", listId] });
+      } catch (err) {
+        addToast(
+          "error",
+          err instanceof Error ? err.message : t("lists.error.update"),
+        );
+      }
+    },
+    [listId, queryClient, addToast, t],
+  );
 
   // ── Loading state ────────────────────────────────────────────────────────
 
@@ -176,12 +164,9 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
       {/* Header: title + icon + type badge */}
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
-          <AutosaveField
-            value={list.title}
-            fieldKey="title"
-            onPatch={patchList}
-            label={t("lists.createModal.titleLabel")}
-          />
+          <h2 className="text-lg font-semibold text-text truncate">
+            {list.title}
+          </h2>
         </div>
 
         <div className="flex flex-col items-center gap-1 shrink-0">
@@ -219,7 +204,10 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
           <h3 className="text-sm font-semibold text-text">
             {t("lists.detailModal.items", { count: items?.length ?? 0 })}
           </h3>
-          <Button size="sm" onClick={handleAddItem}>
+          <Button
+            size="sm"
+            onClick={() => openModal("list-item/new")}
+          >
             {t("lists.detailModal.addItem")}
           </Button>
         </div>
@@ -233,7 +221,7 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
             title={t("lists.detailModal.noItems")}
             description={t("lists.detailModal.noItemsHint")}
             action={
-              <Button size="sm" onClick={handleAddItem}>
+              <Button size="sm" onClick={() => openModal("list-item/new")}>
                 {t("lists.detailModal.addItem")}
               </Button>
             }
@@ -241,13 +229,13 @@ export function ListDetailModal({ onClose, modalKey }: ListDetailModalProps) {
         ) : (
           <div className="divide-y divide-border max-h-[50vh] overflow-y-auto">
             {items.map((item) => (
-              <ListItemForm
+              <ListItemRow
                 key={item.id}
                 item={item}
-                listId={listId}
                 fieldSchema={fieldSchema}
                 timezone={timezone}
-                onDeleted={handleItemDeleted}
+                onToggleDone={handleToggleDone}
+                onClick={(itemId) => openModal(`list-item/${itemId}`)}
               />
             ))}
           </div>

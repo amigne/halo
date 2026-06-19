@@ -182,11 +182,16 @@
       "notifyBefore": "Reminder (min)",
       "assignee": "Assignee",
       "delete": "Delete item",
+      "deleted": "Item deleted",
+      "create": "Create",
       "done": "Mark done",
       "edit": "Edit",
       "doneEditing": "Done editing",
       "overdue": "Overdue",
       "newItemTitle": "New item"
+    },
+    "itemModal": {
+      "title": "Item"
     },
     "error": {
       "fetch": "Failed to load lists",
