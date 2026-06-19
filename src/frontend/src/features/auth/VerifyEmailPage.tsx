@@ -19,7 +19,6 @@ export function VerifyEmailPage() {
       return;
     }
 
-    // GET checks token validity without consuming it.
     fetch(`/api/v1/auth/verify-email?token=${encodeURIComponent(token)}`)
       .then((resp) => resp.json())
       .then((data) => {
@@ -59,7 +58,7 @@ export function VerifyEmailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-4 p-4 text-center">
+    <div className="text-center space-y-4">
       {status === "loading" && (
         <>
           <Spinner />
@@ -68,8 +67,8 @@ export function VerifyEmailPage() {
       )}
       {status === "ready" && (
         <>
-          <h1 className="text-2xl font-bold">{t("auth.verified")}</h1>
-          <p>{t("auth.verifiedMessage")}</p>
+          <h2 className="text-lg font-semibold">{t("auth.verified")}</h2>
+          <p className="text-text-muted">{t("auth.verifiedMessage")}</p>
           <Button onClick={handleConfirm}>
             {t("auth.confirmVerification")}
           </Button>
@@ -83,10 +82,10 @@ export function VerifyEmailPage() {
       )}
       {status === "success" && (
         <>
-          <h1 className="text-2xl font-bold text-success">
+          <h2 className="text-lg font-semibold text-success">
             {t("auth.verified")}
-          </h1>
-          <p>{t("auth.verifiedMessage")}</p>
+          </h2>
+          <p className="text-text-muted">{t("auth.verifiedMessage")}</p>
           <Link to="/login" className="text-primary hover:underline">
             {t("auth.login")}
           </Link>
@@ -94,10 +93,10 @@ export function VerifyEmailPage() {
       )}
       {status === "error" && (
         <>
-          <h1 className="text-2xl font-bold text-danger">
+          <h2 className="text-lg font-semibold text-danger">
             {t("auth.error")}
-          </h1>
-          <p>{t("auth.invalidLink")}</p>
+          </h2>
+          <p className="text-text-muted">{t("auth.invalidLink")}</p>
         </>
       )}
     </div>

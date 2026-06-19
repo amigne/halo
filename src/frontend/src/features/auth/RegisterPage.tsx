@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 import { Spinner } from "@/shared/ui/Spinner";
 import { apiMutate } from "@/shared/api/fetch-wrapper";
 
@@ -50,9 +51,9 @@ export function RegisterPage() {
 
   if (success) {
     return (
-      <div className="mx-auto max-w-sm space-y-4 p-4 text-center">
-        <h1 className="text-2xl font-bold">{t("auth.checkEmail")}</h1>
-        <p className="text-muted">{t("auth.checkEmailMessage")}</p>
+      <div className="text-center space-y-4">
+        <h2 className="text-lg font-semibold">{t("auth.checkEmail")}</h2>
+        <p className="text-text-muted">{t("auth.checkEmailMessage")}</p>
         <Link to="/login" className="text-primary hover:underline">
           {t("auth.login")}
         </Link>
@@ -61,50 +62,35 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 p-4">
-      <h1 className="text-2xl font-bold">{t("auth.register")}</h1>
+    <>
+      <h2 className="text-lg font-semibold">{t("auth.register")}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium" htmlFor="reg-email">
-            {t("auth.email")}
-          </label>
-          <input
-            id="reg-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium" htmlFor="reg-firstname">
-            {t("auth.firstName")}
-          </label>
-          <input
-            id="reg-firstname"
-            type="text"
-            required
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium" htmlFor="reg-lastname">
-            {t("auth.lastName")}
-          </label>
-          <input
-            id="reg-lastname"
-            type="text"
-            required
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium" htmlFor="reg-password">
+        <Input
+          id="reg-email"
+          label={t("auth.email")}
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
+          id="reg-firstname"
+          label={t("auth.firstName")}
+          type="text"
+          required
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+        />
+        <Input
+          id="reg-lastname"
+          label={t("auth.lastName")}
+          type="text"
+          required
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+        />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium" htmlFor="reg-password">
             {t("auth.password")}
           </label>
           <input
@@ -114,17 +100,12 @@ export function RegisterPage() {
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
+            className="w-full rounded-md border border-border-strong bg-surface px-3 py-2 text-sm placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1"
           />
-          <p className="mt-1 text-xs text-text-muted">
-            {t("auth.passwordHint")}
-          </p>
+          <p className="text-xs text-text-muted">{t("auth.passwordHint")}</p>
         </div>
-        <div>
-          <label
-            className="block text-sm font-medium"
-            htmlFor="reg-password-confirm"
-          >
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium" htmlFor="reg-password-confirm">
             {t("auth.confirmPassword")}
           </label>
           <input
@@ -135,19 +116,13 @@ export function RegisterPage() {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             aria-invalid={mismatch || undefined}
-            aria-describedby={
-              mismatch ? "reg-password-confirm-err" : undefined
-            }
-            className={`w-full rounded border bg-surface px-3 py-2 ${
-              mismatch ? "border-danger" : "border-border"
+            aria-describedby={mismatch ? "reg-password-confirm-err" : undefined}
+            className={`w-full rounded-md border bg-surface px-3 py-2 text-sm placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 ${
+              mismatch ? "border-danger" : "border-border-strong"
             }`}
           />
           {mismatch && (
-            <p
-              id="reg-password-confirm-err"
-              role="alert"
-              className="mt-1 text-sm text-danger"
-            >
+            <p id="reg-password-confirm-err" role="alert" className="text-xs text-danger">
               {t("auth.passwordMismatch")}
             </p>
           )}
@@ -166,6 +141,6 @@ export function RegisterPage() {
           {t("auth.login")}
         </Link>
       </p>
-    </div>
+    </>
   );
 }

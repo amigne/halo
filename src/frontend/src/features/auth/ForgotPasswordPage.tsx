@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 import { Spinner } from "@/shared/ui/Spinner";
 import { apiMutate } from "@/shared/api/fetch-wrapper";
 
@@ -24,9 +25,9 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="mx-auto max-w-sm space-y-4 p-4 text-center">
-        <h1 className="text-2xl font-bold">{t("auth.checkEmail")}</h1>
-        <p>{t("auth.resetEmailSent")}</p>
+      <div className="text-center space-y-4">
+        <h2 className="text-lg font-semibold">{t("auth.checkEmail")}</h2>
+        <p className="text-text-muted">{t("auth.resetEmailSent")}</p>
         <Link to="/login" className="text-primary hover:underline">
           {t("auth.login")}
         </Link>
@@ -35,22 +36,17 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 p-4">
-      <h1 className="text-2xl font-bold">{t("auth.forgotPassword")}</h1>
+    <>
+      <h2 className="text-lg font-semibold">{t("auth.forgotPassword")}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium" htmlFor="fp-email">
-            {t("auth.email")}
-          </label>
-          <input
-            id="fp-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
+        <Input
+          id="fp-email"
+          label={t("auth.email")}
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? <Spinner /> : t("auth.sendResetLink")}
         </Button>
@@ -60,6 +56,6 @@ export function ForgotPasswordPage() {
           {t("auth.login")}
         </Link>
       </p>
-    </div>
+    </>
   );
 }

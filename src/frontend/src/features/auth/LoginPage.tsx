@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/ui/Button";
+import { Input } from "@/shared/ui/Input";
 import { Spinner } from "@/shared/ui/Spinner";
 import { apiMutate } from "@/shared/api/fetch-wrapper";
 
@@ -41,36 +42,26 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 p-4">
-      <h1 className="text-2xl font-bold">{t("auth.login")}</h1>
+    <>
+      <h2 className="text-lg font-semibold">{t("auth.login")}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium" htmlFor="login-email">
-            {t("auth.email")}
-          </label>
-          <input
-            id="login-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium" htmlFor="login-password">
-            {t("auth.password")}
-          </label>
-          <input
-            id="login-password"
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-border bg-surface px-3 py-2"
-          />
-        </div>
+        <Input
+          id="login-email"
+          label={t("auth.email")}
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
+          id="login-password"
+          label={t("auth.password")}
+          type="password"
+          required
+          minLength={8}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
         {error && <p className="text-sm text-danger">{error}</p>}
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? <Spinner /> : t("auth.loginButton")}
@@ -83,14 +74,11 @@ export function LoginPage() {
           </Link>
         </p>
         <p>
-          <Link
-            to="/forgot-password"
-            className="text-primary hover:underline"
-          >
+          <Link to="/forgot-password" className="text-primary hover:underline">
             {t("auth.forgotPassword")}
           </Link>
         </p>
       </div>
-    </div>
+    </>
   );
 }

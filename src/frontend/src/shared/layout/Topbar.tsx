@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { useLanguage } from "@/shared/i18n/use-language";
 import { useTheme } from "@/shared/theme/use-theme";
 import { useAuth, useLogout } from "@/features/auth/auth-store";
+import { BrandMark } from "./BrandMark";
 import type { Breakpoint } from "./use-breakpoint";
 
 interface TopbarProps {
@@ -94,22 +95,7 @@ export function Topbar({ breakpoint, onHamburgerClick, mobileOpen }: TopbarProps
           className="flex items-center gap-2 rounded-md px-2 py-1 text-text no-underline hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none min-h-[44px]"
           aria-label={t("layout.topbar.logoAriaLabel")}
         >
-          {/* Logo placeholder — SVG simple */}
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-            <path
-              d="M12 6a6 6 0 0 0-6 6c0 3.3 4 8 6 8s6-4.7 6-8a6 6 0 0 0-6-6z"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <circle cx="12" cy="12" r="2" fill="currentColor" />
-          </svg>
+          <BrandMark />
           <h1 className="text-lg font-bold text-text">{t("app.title")}</h1>
         </Link>
       </div>
