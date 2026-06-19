@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -108,9 +109,8 @@ class ResolveRequest(BaseModel):
     refs: list[RefEntry] = Field(
         min_length=1, description="Tags to resolve (order is preserved in response)"
     )
-    context: str = Field(
+    context: Literal["personal"] = Field(
         default="personal",
-        pattern=r"^personal$",
         description="Ownership context — only ``personal`` in v0.1.",
     )
 

@@ -83,30 +83,35 @@ function createItem(
   const hover = " hover:bg-surface-alt";
   el.className = base + selected + hover;
 
+  // Badge (Type or {PREFIX:ref_no})
+  const badge = document.createElement("span");
+  badge.className =
+    "shrink-0 text-xs font-mono text-text-muted bg-surface-alt " +
+    "px-1 py-0.5 rounded";
+
   if (item.kind === "type") {
-    el.innerHTML =
-      '<span class="shrink-0 text-xs font-mono text-text-muted bg-surface-alt ' +
-      'px-1 py-0.5 rounded">Type</span>' +
-      `<span class="font-mono font-medium">{<span class="text-primary">${escapeHtml(item.prefix)}</span></span>`;
+    badge.textContent = "Type";
+    el.appendChild(badge);
+
+    const prefixSpan = document.createElement("span");
+    prefixSpan.className = "font-mono font-medium";
+    prefixSpan.textContent = "{";
+    const highlight = document.createElement("span");
+    highlight.className = "text-primary";
+    highlight.textContent = item.prefix;
+    prefixSpan.appendChild(highlight);
+    el.appendChild(prefixSpan);
   } else {
-    el.innerHTML =
-      '<span class="shrink-0 text-xs font-mono text-text-muted bg-surface-alt ' +
-      `px-1 py-0.5 rounded">{${escapeHtml(item.tag_prefix)}:${item.ref_no}</span>` +
-      `<span class="truncate">${escapeHtml(item.title)}</span>`;
+    badge.textContent = `{${item.tag_prefix}:${item.ref_no}`;
+    el.appendChild(badge);
+
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "truncate";
+    titleSpan.textContent = item.title;
+    el.appendChild(titleSpan);
   }
 
   return el;
-}
-
-function escapeHtml(s: string): string {
-  const map: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return s.replace(/[&<>"']/g, (c) => map[c] ?? c);
 }
 
 // ── Extension ────────────────────────────────────────────────────────────────

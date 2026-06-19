@@ -7,7 +7,7 @@
  * ``value`` / ``onChange`` / ``multiline``.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -16,7 +16,7 @@ import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { History } from "@tiptap/extension-history";
-import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
+import type { Node as ProseMirrorNode, Slice } from "@tiptap/pm/model";
 
 import { getTagModule } from "@/modules/registry";
 import { useRoutedModal } from "@/shared/modal";
@@ -84,11 +84,15 @@ export function TagEditor({
   const { t } = useTranslation();
   const multiline = variant === "multiline";
   const { openModal } = useRoutedModal();
+  const editorId = useId();
 
   // ── Refs ─────────────────────────────────────────────────────────────────
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+  /** Set while ``syncChipTitles`` dispatches a transaction so ``onUpdate``
+   * can skip the redundant ref-extraction + onChange call. */
+  const isResolving = useRef(false);
 
   // ── Tag resolution ───────────────────────────────────────────────────────
   // We accumulate refs from the document and batch-resolve them.
@@ -110,6 +114,14 @@ export function TagEditor({
       TagSuggestion,
     ],
     [placeholderText, brokenLabel],
+  );
+
+  // ── Clipboard: serialize chips as raw `{PREFIX:ref_no}` on copy ─────────
+  const clipboardTextSerializer = useCallback(
+    (slice: Slice) => {
+      return docToRawText(slice.content as unknown as ProseMirrorNode);
+    },
+    [],
   );
 
   // ── Sync resolved titles back to chip nodes ──────────────────────────────
@@ -143,7 +155,9 @@ export function TagEditor({
     });
 
     if (changed) {
+      isResolving.current = true;
       ed.view.dispatch(tr);
+      isResolving.current = false;
     }
   }, [resolveQuery.data]);
 
@@ -157,7 +171,9 @@ export function TagEditor({
     content: value,
     editable: !disabled,
     editorProps: {
+      clipboardTextSerializer,
       attributes: {
+        id: editorId,
         "data-tag-editor": "",
         "aria-label": label ?? t("ui.tagEditor.label"),
         class: [
@@ -181,6 +197,10 @@ export function TagEditor({
         : undefined,
     },
     onUpdate: useCallback(({ editor: ed }) => {
+      // Skip updates triggered by our own chip-title sync (prevents
+      // redundant doc traversal + state updates when only attrs changed).
+      if (isResolving.current) return;
+
       const raw = docToRawText(ed.state.doc);
       onChangeRef.current(raw);
       // Collect refs for resolution
@@ -255,6 +275,9 @@ export function TagEditor({
 
   return (
     <div ref={wrapperRef}>
+      <label htmlFor={editorId} className="sr-only">
+        {label ?? t("ui.tagEditor.label")}
+      </label>
       <EditorContent editor={editor} />
     </div>
   );

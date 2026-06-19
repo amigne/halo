@@ -11,7 +11,6 @@ Resolve (T-066/T-101)
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import cast
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -171,8 +170,7 @@ async def resolve_refs(
         # implementation scopes results to the current user (via
         # ContextVar) — deny-by-default is enforced there.
         ref_nos = [e.ref_no for e in entries]
-        ctx: ContextKey = cast("ContextKey", body.context)
-        hits = await mod.resolve_refs(ref_nos, ctx)
+        hits = await mod.resolve_refs(ref_nos, body.context)
 
         for e in entries:
             key = (e.tag_prefix, e.ref_no)
