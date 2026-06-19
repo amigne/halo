@@ -1,9 +1,17 @@
-"""Refs search endpoint — autocomplete for ``{PREFIX:ref_no}`` tags (T-065/T-102).
+"""Refs endpoints — autocomplete and resolution for ``{PREFIX:ref_no}`` tags.
 
-Implements the filtering rules described in specs/01 §6.2 (F-064..F-066).
+Search (T-065/T-102)
+    ``GET /api/v1/refs/search`` — autocomplete types + titles (F-064..F-066).
+
+Resolve (T-066/T-101)
+    ``POST /api/v1/refs/resolve`` — batch-resolve tags to title + UUID,
+    deny-by-default (T-084/T-085).
 """
 
 from __future__ import annotations
+
+from collections import defaultdict
+from typing import cast
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,7 +21,15 @@ from halo_api.accounts.models import User
 from halo_api.core.db import get_session
 from halo_api.modules.base import ContextKey, Module
 from halo_api.modules.registry import is_enabled, list_modules
-from halo_api.refs.schemas import PrefixSuggestion, SearchResponse, SearchResult
+from halo_api.refs.schemas import (
+    PrefixSuggestion,
+    RefEntry,
+    ResolveRequest,
+    ResolveResponse,
+    ResolveResult,
+    SearchResponse,
+    SearchResult,
+)
 
 router = APIRouter(prefix="/refs", tags=["refs"])
 
@@ -94,3 +110,90 @@ async def search_refs(
             )
 
     return SearchResponse(types=types, items=items)
+
+
+# ── Resolve ──────────────────────────────────────────────────────────────────
+
+
+def _build_prefix_index() -> dict[str, Module]:
+    """Return a mapping ``tag_prefix → Module`` for all registered modules."""
+    return {mod.tag_prefix: mod for mod in list_modules()}
+
+
+@router.post("/resolve", response_model=ResolveResponse)
+async def resolve_refs(
+    body: ResolveRequest,
+    _user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_session),
+) -> ResolveResponse:
+    """Batch-resolve ``{tag_prefix, ref_no}`` tags to title + UUID (F-062).
+
+    **Dispatch**: each *tag_prefix* is routed to the ``resolve_refs``
+    method of the corresponding module (via the registry).  No
+    hard-coded dependency on any concrete module.
+
+    **Deny-by-default** (T-084/T-085): a tag that references an object
+    belonging to another user, a disabled module, or an unknown prefix
+    is returned as ``exists=false`` with ``title=null, uuid=null`` —
+    the caller can never distinguish "does not exist" from "exists but
+    you cannot access it".
+
+    Results appear in the **same order** as the request entries.
+    """
+    prefix_index = _build_prefix_index()
+
+    # Group requested refs by tag_prefix for a single resolve_refs call
+    # per module (batch resolution).
+    groups: dict[str, list[RefEntry]] = defaultdict(list)
+    for entry in body.refs:
+        groups[entry.tag_prefix].append(entry)
+
+    # Accumulate resolved results keyed by (prefix, ref_no).
+    resolved: dict[tuple[str, int], ResolveResult] = {}
+
+    for tag_prefix, entries in groups.items():
+        mod = prefix_index.get(tag_prefix)
+
+        # Module not registered or disabled → everything is nonexistent.
+        if mod is None or not await is_enabled(db, mod.key):
+            for e in entries:
+                key = (e.tag_prefix, e.ref_no)
+                resolved[key] = ResolveResult(
+                    tag_prefix=e.tag_prefix,
+                    ref_no=e.ref_no,
+                    title=None,
+                    uuid=None,
+                    exists=False,
+                )
+            continue
+
+        # Batch-resolve via the module.  The module's resolve_refs
+        # implementation scopes results to the current user (via
+        # ContextVar) — deny-by-default is enforced there.
+        ref_nos = [e.ref_no for e in entries]
+        ctx: ContextKey = cast("ContextKey", body.context)
+        hits = await mod.resolve_refs(ref_nos, ctx)
+
+        for e in entries:
+            key = (e.tag_prefix, e.ref_no)
+            hit = hits.get(e.ref_no)
+            if hit is not None:
+                resolved[key] = ResolveResult(
+                    tag_prefix=e.tag_prefix,
+                    ref_no=e.ref_no,
+                    title=hit.title,
+                    uuid=hit.uuid,
+                    exists=True,
+                )
+            else:
+                resolved[key] = ResolveResult(
+                    tag_prefix=e.tag_prefix,
+                    ref_no=e.ref_no,
+                    title=None,
+                    uuid=None,
+                    exists=False,
+                )
+
+    # Preserve request order.
+    results = [resolved[(e.tag_prefix, e.ref_no)] for e in body.refs]
+    return ResolveResponse(results=results)

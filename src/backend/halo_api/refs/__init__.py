@@ -11,12 +11,24 @@ The autocomplete search endpoint (T-065/T-102) is provided by
 from halo_api.refs.counters import allocate_ref_no
 from halo_api.refs.grammar import TAG_RE, is_valid_prefix, iter_unique_refs, parse_tags
 from halo_api.refs.models import RefCounter
-from halo_api.refs.schemas import PrefixSuggestion, SearchResponse, SearchResult
+from halo_api.refs.schemas import (
+    PrefixSuggestion,
+    RefEntry,
+    ResolveRequest,
+    ResolveResponse,
+    ResolveResult,
+    SearchResponse,
+    SearchResult,
+)
 
 __all__ = [
     "TAG_RE",
     "PrefixSuggestion",
     "RefCounter",
+    "RefEntry",
+    "ResolveRequest",
+    "ResolveResponse",
+    "ResolveResult",
     "SearchResponse",
     "SearchResult",
     "allocate_ref_no",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import uuid
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PrefixSuggestion(BaseModel):
@@ -71,3 +71,104 @@ class SearchResponse(BaseModel):
 
     types: list[PrefixSuggestion]
     items: list[SearchResult]
+
+
+# ── Resolve (POST /api/v1/refs/resolve) ──────────────────────────────────────
+
+
+class RefEntry(BaseModel):
+    """A single tag reference to resolve.
+
+    Mirrors the raw ``{PREFIX:ref_no}`` form parsed by :mod:`~halo_api.refs.grammar`.
+    """
+
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"tag_prefix": "LIST", "ref_no": 3}}
+    )
+
+    tag_prefix: str = Field(description="Uppercase module prefix, e.g. ``LIST``")
+    ref_no: int = Field(ge=1, description="Human-readable reference number")
+
+
+class ResolveRequest(BaseModel):
+    """Request body for ``POST /api/v1/refs/resolve``."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "refs": [
+                    {"tag_prefix": "LIST", "ref_no": 1},
+                    {"tag_prefix": "NOTE", "ref_no": 5},
+                ],
+                "context": "personal",
+            }
+        }
+    )
+
+    refs: list[RefEntry] = Field(
+        min_length=1, description="Tags to resolve (order is preserved in response)"
+    )
+    context: str = Field(
+        default="personal",
+        pattern=r"^personal$",
+        description="Ownership context — only ``personal`` in v0.1.",
+    )
+
+
+class ResolveResult(BaseModel):
+    """Resolution outcome for a single tag reference.
+
+    When *exists* is ``False`` both *title* and *uuid* are ``null``
+    (deny-by-default — no information leakage, T-084/T-085).
+    """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "tag_prefix": "LIST",
+                "ref_no": 3,
+                "title": "Courses hebdomadaires",
+                "uuid": "018f3a92-7c1f-7b8e-9d2a-4e5f6a7b8c9d",
+                "exists": True,
+            }
+        }
+    )
+
+    tag_prefix: str
+    ref_no: int
+    title: str | None
+    uuid: uuid.UUID | None
+    exists: bool
+
+
+class ResolveResponse(BaseModel):
+    """Response for ``POST /api/v1/refs/resolve``.
+
+    Results appear in the **same order** as the request entries so the
+    frontend can map each outcome back to its originating tag.
+    """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "results": [
+                    {
+                        "tag_prefix": "LIST",
+                        "ref_no": 1,
+                        "title": "Courses",
+                        "uuid": "018f3a92-7c1f-7b8e-9d2a-4e5f6a7b8c9d",
+                        "exists": True,
+                    },
+                    {
+                        "tag_prefix": "NOTE",
+                        "ref_no": 99,
+                        "title": None,
+                        "uuid": None,
+                        "exists": False,
+                    },
+                ]
+            }
+        }
+    )
+
+    results: list[ResolveResult]
