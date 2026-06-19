@@ -16,6 +16,7 @@ from halo_api.core.csrf import CSRFCustomHeaderMiddleware
 from halo_api.core.db import check_db, engine
 from halo_api.core.redis import check_redis, close_redis
 from halo_api.modules.lists.router import router as lists_router
+from halo_api.refs.router import router as refs_router
 
 
 @asynccontextmanager
@@ -77,4 +78,5 @@ async def ready() -> JSONResponse:
 v1_router.include_router(accounts_router)
 v1_router.include_router(users_router)
 v1_router.include_router(lists_router)
+v1_router.include_router(refs_router)
 app.include_router(v1_router)
