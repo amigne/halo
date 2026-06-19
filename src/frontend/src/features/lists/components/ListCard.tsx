@@ -70,25 +70,29 @@ export function ListCard({ list, typeLabel, onOpen, onEdit }: ListCardProps) {
   const { t } = useTranslation();
 
   const handleOpen = useCallback(() => onOpen(list.id), [list.id, onOpen]);
-  const handleEdit = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onEdit(list.id);
-    },
-    [list.id, onEdit],
-  );
+  const handleEdit = useCallback(() => onEdit(list.id), [list.id, onEdit]);
 
   return (
-    <Card interactive className="flex flex-col gap-3 p-4 cursor-pointer" onClick={handleOpen}>
-      {/* Top row: icon + title + menu button */}
+    <Card interactive className="relative flex flex-col gap-3 p-4">
+      {/* Top row: icon + title + menu button.
+          The title is a stretched-link button: its ::after overlay covers the
+          whole card so a click anywhere opens the list, while the ⋯ button sits
+          above it (relative z-10). No nested role=button container (U-123). */}
       <div className="flex items-center gap-3">
         <IconPreview iconKey={list.icon} />
-        <span className="flex-1 font-medium text-text truncate">{list.title}</span>
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="flex-1 min-w-0 text-left font-medium text-text truncate rounded after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1"
+        >
+          {list.title}
+        </button>
         <Button
           size="icon"
           variant="ghost"
           onClick={handleEdit}
           aria-label={t("lists.card.menu")}
+          className="relative z-10"
         >
           <svg
             width="16"

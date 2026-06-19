@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, Link } from "@tanstack/react-router";
 import { useAuth } from "@/features/auth/auth-store";
+import { Button } from "@/shared/ui/Button";
 import { Tooltip } from "@/shared/ui/Tooltip";
 import type { Breakpoint } from "./use-breakpoint";
 
@@ -130,10 +131,10 @@ export function SideMenu({
     const inner = (
       <Link
         to={path}
-        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium no-underline transition-colors min-h-[44px] cursor-pointer ${
+        className={`flex items-center gap-3 px-3 h-9 rounded-md text-sm font-medium no-underline transition-colors cursor-pointer ${
           isActive
             ? "bg-primary text-primary-contrast"
-            : "text-text hover:bg-border"
+            : "text-text hover:bg-bg"
         } focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none`}
         aria-current={isActive ? "page" : undefined}
         onClick={isSmartphone ? onMobileClose : undefined}
@@ -221,10 +222,11 @@ export function SideMenu({
             }
             position="right"
           >
-            <button
-              type="button"
+            <Button
+              size="icon"
+              variant="ghost"
               onClick={onToggleCollapse}
-              className="flex items-center justify-center w-full rounded-md py-2 text-text-muted hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none min-h-[44px] cursor-pointer"
+              className="w-full"
               aria-label={
                 collapsed
                   ? t("layout.menu.expand")
@@ -232,41 +234,15 @@ export function SideMenu({
               }
             >
               {collapsed ? (
-                /* Chevron right — expand */
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <polyline
-                    points="9 18 15 12 9 6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <polyline points="9 18 15 12 9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
-                /* Chevron left — collapse */
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <polyline
-                    points="15 18 9 12 15 6"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               )}
-            </button>
+            </Button>
           </Tooltip>
         </div>
       )}

@@ -2,7 +2,12 @@ import type { ReactNode, HTMLAttributes } from "react";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
-  /** When true, adds hover shadow + transition, and makes the card focusable. */
+  /**
+   * When true, adds hover elevation (visual only). The card itself is NOT made
+   * focusable/role=button: clickable cards must host their own real control
+   * (a `<button>`/`<Link>`, e.g. via a stretched-link) so keyboard and screen
+   * reader users get a proper, non-nested interactive element (U-121/U-123).
+   */
   interactive?: boolean;
 }
 
@@ -10,7 +15,8 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
  * Card surface consuming the `.card` design token class.
  *
  * - Wraps children in a styled container (bg-surface, border, radius, shadow)
- * - `interactive` variant adds hover elevation + focus ring for clickable cards
+ * - `interactive` variant only adds hover elevation; accessibility comes from
+ *   the consumer's own interactive child element.
  */
 export function Card({
   children,
@@ -20,8 +26,7 @@ export function Card({
 }: CardProps) {
   return (
     <div
-      className={`card p-4 ${interactive ? "hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1" : ""} ${className}`}
-      tabIndex={interactive ? 0 : undefined}
+      className={`card p-4 ${interactive ? "hover:shadow-md transition-shadow" : ""} ${className}`}
       {...props}
     >
       {children}
