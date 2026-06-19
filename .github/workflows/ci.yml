@@ -76,6 +76,9 @@ jobs:
       - name: TypeScript typecheck
         run: npx tsc --noEmit
 
+      - name: Unit tests
+        run: npm test
+
   # ── Tests: SQLite + Postgres 18 matrix ─────────────────────────────────────
   test:
     name: Test (${{ matrix.db }})

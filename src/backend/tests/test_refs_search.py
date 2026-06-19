@@ -376,3 +376,16 @@ async def test_search_like_wildcards_are_escaped(
     # If % were unescaped, every list would match → data["items"] would
     # have all_count items.  With escaping, only lists with literal "%" match.
     assert len(data["items"]) <= all_count
+
+
+# ── Input validation ─────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_search_query_too_long_rejected(
+    http_client: AsyncClient,
+) -> None:
+    """A query longer than 100 chars is rejected with 422."""
+    await _register_and_login(http_client)
+    r = await http_client.get("/api/v1/refs/search", params={"q": "A" * 101})
+    assert r.status_code == 422

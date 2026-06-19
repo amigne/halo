@@ -87,8 +87,16 @@ class RefEntry(BaseModel):
         json_schema_extra={"example": {"tag_prefix": "LIST", "ref_no": 3}}
     )
 
-    tag_prefix: str = Field(description="Uppercase module prefix, e.g. ``LIST``")
-    ref_no: int = Field(ge=1, description="Human-readable reference number")
+    tag_prefix: str = Field(
+        min_length=1,
+        max_length=20,
+        description="Uppercase module prefix, e.g. ``LIST``",
+    )
+    ref_no: int = Field(
+        ge=1,
+        le=2_147_483_647,  # Postgres Integer max — prevents overflow
+        description="Human-readable reference number",
+    )
 
 
 class ResolveRequest(BaseModel):
@@ -107,7 +115,9 @@ class ResolveRequest(BaseModel):
     )
 
     refs: list[RefEntry] = Field(
-        min_length=1, description="Tags to resolve (order is preserved in response)"
+        min_length=1,
+        max_length=100,
+        description="Tags to resolve (order is preserved in response)",
     )
     context: Literal["personal"] = Field(
         default="personal",

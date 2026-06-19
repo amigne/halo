@@ -150,11 +150,22 @@ export const TagSuggestion = Extension.create({
               .insertContent(`{${props.prefix}:`)
               .run();
           } else {
+            // Insert a tagChip node, not plain text — the node renders
+            // as a chip and is later resolved by syncChipTitles.
             editor
               .chain()
               .focus()
               .deleteRange(range)
-              .insertContent(`{${props.tag_prefix}:${props.ref_no}}`)
+              .insertContent({
+                type: "tagChip",
+                attrs: {
+                  tag_prefix: props.tag_prefix,
+                  ref_no: props.ref_no,
+                  title: props.title, // known from autocomplete hit
+                  uuid: props.uuid,
+                  broken: false,
+                },
+              })
               .run();
           }
         },

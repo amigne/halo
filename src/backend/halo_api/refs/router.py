@@ -37,6 +37,7 @@ router = APIRouter(prefix="/refs", tags=["refs"])
 async def search_refs(
     q: str = Query(
         default="",
+        max_length=100,
         description=(
             "Text typed after the opening brace ``{``. "
             "Empty → all types; 1 char → matching types + all objects; "

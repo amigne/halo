@@ -1,7 +1,7 @@
 /**
  * TagEditor — TipTap-based tag editor with ``{`` autocomplete, chip
  * rendering, title resolution, cross-module click, and broken-tag
- * handling (étape 5-4 → 5-5, specs/02 §8).
+ * handling (étape 5-4 → 5-6, specs/02 §8).
  *
  * **Public API is unchanged** from the étape 3-10 stub:
  * ``value`` / ``onChange`` / ``multiline``.
@@ -21,7 +21,7 @@ import type { Node as ProseMirrorNode, Slice } from "@tiptap/pm/model";
 import { getTagModule } from "@/modules/registry";
 import { useRoutedModal } from "@/shared/modal";
 
-import { BROKEN_SENTINEL, TagChip, type TagChipAttrs } from "./chip-node";
+import { TagChip, type TagChipAttrs } from "./chip-node";
 import { TagSuggestion } from "./suggestion";
 import { useResolveTags, type TagRef } from "./use-resolve-tags";
 
@@ -36,7 +36,11 @@ export interface TagEditorProps {
   label?: string;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Regex for raw-text ↔ document conversion ─────────────────────────────────
+
+const TAG_RE = /\{([A-Z]+):([1-9][0-9]*)\}/g;
+
+// ── Serialisation: document → raw text ───────────────────────────────────────
 
 function docToRawText(doc: ProseMirrorNode): string {
   return doc.textBetween(0, doc.content.size, "\n", (leafNode) => {
@@ -61,9 +65,51 @@ function extractTagRefs(doc: ProseMirrorNode): TagRef[] {
   return refs;
 }
 
+// ── Deserialisation: raw text → ProseMirror JSON ─────────────────────────────
+
+/**
+ * Parse raw text and produce a ProseMirror document JSON structure
+ * where ``{PREFIX:ref_no}`` patterns become ``tagChip`` nodes.
+ *
+ * Never emits an empty text node (ProseMirror forbids it).
+ */
+function rawTextToDoc(raw: string): Record<string, unknown> {
+  TAG_RE.lastIndex = 0;
+
+  const lineToNodes = (line: string): unknown[] => {
+    const nodes: unknown[] = [];
+    let last = 0;
+    for (const m of line.matchAll(TAG_RE)) {
+      if (m.index! > last) {
+        nodes.push({ type: "text", text: line.slice(last, m.index) });
+      }
+      nodes.push({
+        type: "tagChip",
+        attrs: {
+          tag_prefix: m[1],
+          ref_no: Number(m[2]),
+          title: null,
+          uuid: null,
+          broken: false,
+        },
+      });
+      last = m.index! + m[0].length;
+    }
+    if (last < line.length) {
+      nodes.push({ type: "text", text: line.slice(last) });
+    }
+    return nodes;
+  };
+
+  const paragraphs = raw.split("\n").map((line) => ({
+    type: "paragraph",
+    content: lineToNodes(line),
+  }));
+  return { type: "doc", content: paragraphs };
+}
+
 // ── Helpers (continued) ─────────────────────────────────────────────────────
 
-/** useState that also exposes a stable ref (avoids stale closures). */
 function useStateAsRef<T>(initial: T) {
   const [state, setState] = useState<T>(initial);
   const ref = useRef(state);
@@ -90,12 +136,9 @@ export function TagEditor({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
-  /** Set while ``syncChipTitles`` dispatches a transaction so ``onUpdate``
-   * can skip the redundant ref-extraction + onChange call. */
   const isResolving = useRef(false);
 
   // ── Tag resolution ───────────────────────────────────────────────────────
-  // We accumulate refs from the document and batch-resolve them.
   const [tagRefs, setTagRefs] = useStateAsRef<TagRef[]>([]);
   const resolveQuery = useResolveTags(tagRefs);
 
@@ -140,18 +183,24 @@ export function TagEditor({
       const hit = resolved.get(key);
 
       if (hit) {
-        const newTitle = hit.exists ? hit.title : BROKEN_SENTINEL;
+        const newTitle = hit.exists ? hit.title : null;
         const newUuid = hit.uuid;
-        if (a.title !== newTitle || a.uuid !== newUuid) {
+        const newBroken = !hit.exists;
+        if (
+          a.title !== newTitle ||
+          a.uuid !== newUuid ||
+          a.broken !== newBroken
+        ) {
           tr.setNodeMarkup(pos, node.type, {
             ...a,
             title: newTitle,
             uuid: newUuid,
+            broken: newBroken,
           });
           changed = true;
         }
       }
-      return true; // continue traversal (but chip is atom, so no children)
+      return true;
     });
 
     if (changed) {
@@ -168,7 +217,7 @@ export function TagEditor({
   // ── Editor setup ────────────────────────────────────────────────────────
   const editor = useEditor({
     extensions,
-    content: value,
+    content: rawTextToDoc(value),
     editable: !disabled,
     editorProps: {
       clipboardTextSerializer,
@@ -197,15 +246,11 @@ export function TagEditor({
         : undefined,
     },
     onUpdate: useCallback(({ editor: ed }) => {
-      // Skip updates triggered by our own chip-title sync (prevents
-      // redundant doc traversal + state updates when only attrs changed).
       if (isResolving.current) return;
 
       const raw = docToRawText(ed.state.doc);
       onChangeRef.current(raw);
-      // Collect refs for resolution
       const refs = extractTagRefs(ed.state.doc);
-      // Only fire state update when the set actually changes (prevents loops)
       setTagRefs((prev) => {
         const same =
           prev.length === refs.length &&
@@ -234,7 +279,8 @@ export function TagEditor({
 
       const uuid = target.dataset.uuid;
       const prefix = target.dataset.tagPrefix;
-      if (!uuid || !prefix) return; // broken or unresolved — not clickable
+      const broken = target.dataset.broken === "true";
+      if (!uuid || !prefix || broken) return;
 
       const mod = getTagModule(prefix);
       if (!mod) return;
@@ -246,13 +292,10 @@ export function TagEditor({
     [openModal],
   );
 
-  // Attach / detach the delegated click listener on the editor's DOM wrapper.
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
-    // The editor content is inside this wrapper; use capture phase so we
-    // catch clicks on chips before they bubble to contentEditable handlers.
     el.addEventListener("click", handleChipClick, true);
     return () => el.removeEventListener("click", handleChipClick, true);
   }, [handleChipClick, editor]);
@@ -262,7 +305,7 @@ export function TagEditor({
     if (!editor) return;
     const currentRaw = docToRawText(editor.state.doc);
     if (value !== currentRaw) {
-      editor.commands.setContent(value, { emitUpdate: false });
+      editor.commands.setContent(rawTextToDoc(value), { emitUpdate: false });
     }
   }, [editor, value]);
 

@@ -421,3 +421,44 @@ async def test_resolve_requires_csrf(http_client: AsyncClient) -> None:
         json={"refs": [{"tag_prefix": "LIST", "ref_no": 1}]},
     )
     assert r.status_code == 403
+
+
+# ── Bounds validation ────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_resolve_too_many_refs_rejected(
+    http_client: AsyncClient,
+) -> None:
+    """A request with > 100 refs is rejected with 422."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+    r = await _csrf_post(
+        http_client,
+        "/api/v1/refs/resolve",
+        csrf,
+        json={
+            "refs": [{"tag_prefix": "LIST", "ref_no": 1}] * 101,
+            "context": "personal",
+        },
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_resolve_ref_no_overflow_rejected(
+    http_client: AsyncClient,
+) -> None:
+    """A ref_no beyond the Integer column max is rejected with 422."""
+    await _register_and_login(http_client)
+    csrf = await _fetch_csrf(http_client)
+    r = await _csrf_post(
+        http_client,
+        "/api/v1/refs/resolve",
+        csrf,
+        json={
+            "refs": [{"tag_prefix": "LIST", "ref_no": 9_999_999_999}],
+            "context": "personal",
+        },
+    )
+    assert r.status_code == 422

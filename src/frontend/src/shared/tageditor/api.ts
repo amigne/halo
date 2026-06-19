@@ -39,6 +39,7 @@ export async function searchRefs(
   const url = `${BASE_URL}/api/v1/refs/search?q=${encodeURIComponent(q)}`;
   const res = await fetch(url, {
     headers: { Accept: "application/json" },
+    credentials: "same-origin",
     signal,
   });
   if (!res.ok) {
