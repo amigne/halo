@@ -1,24 +1,13 @@
 /**
- * TagEditor — TipTap-based tag editor with ``{`` autocomplete and chip
- * rendering (étape 5-4, specs/02 §8, U-080..U-083, U-087).
+ * TagEditor — TipTap-based tag editor with ``{`` autocomplete, chip
+ * rendering, title resolution, cross-module click, and broken-tag
+ * handling (étape 5-4 → 5-5, specs/02 §8).
  *
  * **Public API is unchanged** from the étape 3-10 stub:
  * ``value`` / ``onChange`` / ``multiline``.
- *
- * Storage
- * -------
- * The value emitted by ``onChange`` is **raw text** (e.g.
- * ``{LIST:3} {NOTE:7}``).  TipTap renders recognised tags as styled chips
- * internally, but the caller never sees the chip representation — only
- * the raw text.
- *
- * Variants
- * --------
- * - ``multiline`` / ``variant="multiline"`` → WYSIWYG with line breaks.
- * - ``!multiline`` / ``variant="single"`` → single-line, Enter blocked.
  */
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useEditor, EditorContent } from "@tiptap/react";
@@ -29,43 +18,57 @@ import { Placeholder } from "@tiptap/extension-placeholder";
 import { History } from "@tiptap/extension-history";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 
-import { TagChip } from "./chip-node";
+import { getTagModule } from "@/modules/registry";
+import { useRoutedModal } from "@/shared/modal";
+
+import { BROKEN_SENTINEL, TagChip, type TagChipAttrs } from "./chip-node";
 import { TagSuggestion } from "./suggestion";
+import { useResolveTags, type TagRef } from "./use-resolve-tags";
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
 export interface TagEditorProps {
-  /** Current tag string value (e.g. ``"{LIST:42} {NOTE:7}"``). */
   value: string;
-  /** Called when the tag string changes (raw text). */
   onChange: (value: string) => void;
-  /** Whether the editor is disabled. */
   disabled?: boolean;
-  /**
-   * Variant: ``"single"`` (inline, no line breaks) or ``"multiline"``
-   * (WYSIWYG with paragraphs).  Default: ``"single"``.
-   */
   variant?: "single" | "multiline";
-  /** Placeholder text for the empty state. */
   placeholder?: string;
-  /** Optional label for ARIA. */
   label?: string;
 }
 
-// ── Serialisation helpers ────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Walk the ProseMirror document tree and reconstruct the raw text
- * representation, emitting ``{PREFIX:ref_no}`` for each chip node.
- */
 function docToRawText(doc: ProseMirrorNode): string {
   return doc.textBetween(0, doc.content.size, "\n", (leafNode) => {
     if (leafNode.type.name === "tagChip") {
-      const a = leafNode.attrs as { tag_prefix: string; ref_no: number };
+      const a = leafNode.attrs as TagChipAttrs;
       return `{${a.tag_prefix}:${a.ref_no}}`;
     }
     return "";
   });
+}
+
+/** Collect every ``(tag_prefix, ref_no)`` from chip nodes in the document. */
+function extractTagRefs(doc: ProseMirrorNode): TagRef[] {
+  const refs: TagRef[] = [];
+  doc.descendants((node) => {
+    if (node.type.name === "tagChip") {
+      const a = node.attrs as TagChipAttrs;
+      refs.push({ tag_prefix: a.tag_prefix, ref_no: a.ref_no });
+    }
+    return true;
+  });
+  return refs;
+}
+
+// ── Helpers (continued) ─────────────────────────────────────────────────────
+
+/** useState that also exposes a stable ref (avoids stale closures). */
+function useStateAsRef<T>(initial: T) {
+  const [state, setState] = useState<T>(initial);
+  const ref = useRef(state);
+  ref.current = state;
+  return [state, setState, ref] as const;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -80,13 +83,20 @@ export function TagEditor({
 }: TagEditorProps) {
   const { t } = useTranslation();
   const multiline = variant === "multiline";
+  const { openModal } = useRoutedModal();
 
-  // Stable onChange ref to avoid re-creating the editor on every render.
+  // ── Refs ─────────────────────────────────────────────────────────────────
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
 
-  const placeholderText =
-    placeholder ?? t("ui.tagEditor.placeholder");
+  // ── Tag resolution ───────────────────────────────────────────────────────
+  // We accumulate refs from the document and batch-resolve them.
+  const [tagRefs, setTagRefs] = useStateAsRef<TagRef[]>([]);
+  const resolveQuery = useResolveTags(tagRefs);
+
+  const placeholderText = placeholder ?? t("ui.tagEditor.placeholder");
+  const brokenLabel = t("ui.tagEditor.brokenTag");
 
   // ── Extensions ──────────────────────────────────────────────────────────
   const extensions = useMemo(
@@ -96,11 +106,50 @@ export function TagEditor({
       Text,
       History,
       Placeholder.configure({ placeholder: placeholderText }),
-      TagChip,
+      TagChip.configure({ brokenLabel }),
       TagSuggestion,
     ],
-    [placeholderText],
+    [placeholderText, brokenLabel],
   );
+
+  // ── Sync resolved titles back to chip nodes ──────────────────────────────
+  const syncChipTitles = useCallback(() => {
+    const ed = editorRef.current;
+    if (!ed || resolveQuery.data == null) return;
+
+    const resolved = resolveQuery.data;
+    const tr = ed.state.tr;
+    let changed = false;
+
+    ed.state.doc.descendants((node, pos) => {
+      if (node.type.name !== "tagChip") return true;
+      const a = node.attrs as TagChipAttrs;
+      const key = `${a.tag_prefix}:${a.ref_no}`;
+      const hit = resolved.get(key);
+
+      if (hit) {
+        const newTitle = hit.exists ? hit.title : BROKEN_SENTINEL;
+        const newUuid = hit.uuid;
+        if (a.title !== newTitle || a.uuid !== newUuid) {
+          tr.setNodeMarkup(pos, node.type, {
+            ...a,
+            title: newTitle,
+            uuid: newUuid,
+          });
+          changed = true;
+        }
+      }
+      return true; // continue traversal (but chip is atom, so no children)
+    });
+
+    if (changed) {
+      ed.view.dispatch(tr);
+    }
+  }, [resolveQuery.data]);
+
+  useEffect(() => {
+    syncChipTitles();
+  }, [syncChipTitles]);
 
   // ── Editor setup ────────────────────────────────────────────────────────
   const editor = useEditor({
@@ -112,20 +161,15 @@ export function TagEditor({
         "data-tag-editor": "",
         "aria-label": label ?? t("ui.tagEditor.label"),
         class: [
-          // Base prose styles
           "prose prose-sm max-w-none",
-          // Shared look
           "w-full px-3 py-2 rounded-md border bg-surface text-text",
           "placeholder:text-text-muted",
           "focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none",
           "border-border",
-          // Touch target
           "[@media(pointer:coarse)]:min-h-11",
-          // Disabled
           disabled ? "opacity-50 pointer-events-none" : "",
         ].join(" "),
       },
-      // Block Enter in single-line mode
       handleKeyDown: !multiline
         ? (_view, event) => {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -136,32 +180,82 @@ export function TagEditor({
           }
         : undefined,
     },
-    // ── onUpdate: extract raw text → onChange ──────────────────────────
     onUpdate: useCallback(({ editor: ed }) => {
       const raw = docToRawText(ed.state.doc);
       onChangeRef.current(raw);
+      // Collect refs for resolution
+      const refs = extractTagRefs(ed.state.doc);
+      // Only fire state update when the set actually changes (prevents loops)
+      setTagRefs((prev) => {
+        const same =
+          prev.length === refs.length &&
+          prev.every(
+            (r, i) =>
+              r.tag_prefix === refs[i]!.tag_prefix &&
+              r.ref_no === refs[i]!.ref_no,
+          );
+        return same ? prev : refs;
+      });
     }, []),
   });
 
+  // Keep a ref so syncChipTitles can access the editor without a dep on `editor`.
+  useEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
+  // ── Chip click → open cross-module modal ──────────────────────────────────
+  const handleChipClick = useCallback(
+    (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest(
+        "[data-tag-chip]",
+      ) as HTMLElement | null;
+      if (!target) return;
+
+      const uuid = target.dataset.uuid;
+      const prefix = target.dataset.tagPrefix;
+      if (!uuid || !prefix) return; // broken or unresolved — not clickable
+
+      const mod = getTagModule(prefix);
+      if (!mod) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      openModal(`${mod.detailModalPrefix}${uuid}`);
+    },
+    [openModal],
+  );
+
+  // Attach / detach the delegated click listener on the editor's DOM wrapper.
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    // The editor content is inside this wrapper; use capture phase so we
+    // catch clicks on chips before they bubble to contentEditable handlers.
+    el.addEventListener("click", handleChipClick, true);
+    return () => el.removeEventListener("click", handleChipClick, true);
+  }, [handleChipClick, editor]);
+
   // ── Sync external value → editor content ───────────────────────────────
-  // Only update when value changes externally (e.g. parent reset).
-  // We compare the raw text output to avoid cursor-position resets.
   useEffect(() => {
     if (!editor) return;
-    // Avoid loops: only sync when external value differs from current.
     const currentRaw = docToRawText(editor.state.doc);
     if (value !== currentRaw) {
-      // Replace content programmatically.
       editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [editor, value]);
 
-  // ── Cleanup on unmount ─────────────────────────────────────────────────
+  // ── Cleanup ─────────────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
       editor?.destroy();
     };
   }, [editor]);
 
-  return <EditorContent editor={editor} />;
+  return (
+    <div ref={wrapperRef}>
+      <EditorContent editor={editor} />
+    </div>
+  );
 }

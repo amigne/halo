@@ -226,12 +226,12 @@ export function ListItemModal({ onClose, modalKey }: ListItemModalProps) {
     return (
       <div className="flex flex-col gap-4" onKeyDown={handleModalKeyDown}>
         {/* Title */}
-        <Input
+        <TagEditor
           label={t("lists.item.title")}
           value={createTitle}
-          onChange={(e) => setCreateTitle(e.target.value)}
+          onChange={setCreateTitle}
+          variant="single"
           placeholder={t("lists.item.titlePlaceholder")}
-          required
         />
 
         {/* Description */}
@@ -318,12 +318,23 @@ export function ListItemModal({ onClose, modalKey }: ListItemModalProps) {
 
   return (
     <div className="flex flex-col gap-4" onKeyDown={handleModalKeyDown}>
-      {/* Title — autosave */}
+      {/* Title — autosave via TagEditor (single-line). */}
       <AutosaveField
         value={item.title}
         fieldKey="title"
         onPatch={patchItem}
         label={t("lists.item.title")}
+        renderInput={({ localValue, onChange, onBlur, handleKeyDown }) => (
+          <div onBlur={onBlur} onKeyDown={handleKeyDown}>
+            <TagEditor
+              value={localValue}
+              onChange={onChange}
+              variant="single"
+              placeholder={t("lists.item.titlePlaceholder")}
+              label={t("lists.item.title")}
+            />
+          </div>
+        )}
       />
 
       {/* Description — autosave via TagEditor.

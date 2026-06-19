@@ -138,7 +138,8 @@
       "label": "Tag editor",
       "placeholder": "Type text…",
       "noResults": "No matching tags",
-      "typeLabel": "Type"
+      "typeLabel": "Type",
+      "brokenTag": "deleted"
     }
   },
   "modules": {
