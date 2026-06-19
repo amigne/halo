@@ -13,6 +13,28 @@
 #   db        — Postgres 18 on :5432 (profile: postgres)
 
 services:
+  # ── One-shot migration (runs before backend/worker) ─────────────────────────
+  migrate:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile.dev
+    image: halo-backend-dev:latest
+    container_name: halo-migrate-dev
+    command:
+      ["/app/.venv/bin/alembic", "-c", "/app/alembic.ini", "upgrade", "head"]
+    env_file:
+      - .env.dev
+    volumes:
+      - ./src/backend/halo_api:/app/halo_api:ro
+      - ./src/backend/migrations:/app/migrations:ro
+      - ./src/backend/alembic.ini:/app/alembic.ini:ro
+      - halo_dev_data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
+    restart: "no"
+
   # ── Backend (Uvicorn hot-reload) ───────────────────────────────────────────
   backend:
     build:
@@ -32,6 +54,8 @@ services:
     env_file:
       - .env.dev
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       db:
@@ -59,6 +83,8 @@ services:
     env_file:
       - .env.dev
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       mailpit:

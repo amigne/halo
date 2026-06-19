@@ -1,13 +1,6 @@
 /**
  * E2E tests — tag autocomplete, chip rendering, cross-module click,
- * and broken-tag handling (étape 5-5).
- *
- * Runs against the **real** backend stack.  The test user is seeded
- * automatically by ``global-setup.ts`` (register + verify via mailpit).
- *
- * Prerequisites:
- *   docker compose -f docker-compose.dev.yml --profile postgres up -d
- *   cd src/frontend && npx playwright test e2e/tags.spec.ts
+ * and broken-tag handling (étape 5-5, repaired 5-7).
  */
 
 import { readFileSync } from "node:fs";
@@ -31,7 +24,6 @@ test.describe("Tags (real backend)", () => {
   test("full flow: autocomplete → chip → click → broken", async ({ page }) => {
     test.setTimeout(240_000);
 
-    // ── Setup ──────────────────────────────────────────────────────────────
     await page.addInitScript(() => {
       localStorage.setItem("halo.lang", "fr");
     });
@@ -53,7 +45,7 @@ test.describe("Tags (real backend)", () => {
     await page.goto("/lists", { timeout: 15_000 });
     await listsResp1;
 
-    // 3. Create the TARGET list (will be referenced by the chip)
+    // 3. Create the TARGET list
     await page.getByRole("button", { name: /Créer/ }).click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await page.locator("#list-title").fill(TARGET_LIST);
@@ -63,13 +55,11 @@ test.describe("Tags (real backend)", () => {
     );
     await page.getByRole("button", { name: "Créer", exact: true }).click();
     const targetJson = await (await createTargetResp).json();
-    const targetRefNo: number = targetJson.ref_no;
-    const targetId: string = targetJson.id;
     // Close the auto-opened modal
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
 
-    // 4. Create the SOURCE list (will contain an item with a tag to TARGET)
+    // 4. Create the SOURCE list
     const createSourceResp = page.waitForResponse(
       (r) => r.url().endsWith("/modules/lists") && r.request().method() === "POST",
       { timeout: 15_000 },
@@ -78,8 +68,7 @@ test.describe("Tags (real backend)", () => {
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await page.locator("#list-title").fill(SOURCE_LIST);
     await page.getByRole("button", { name: "Créer", exact: true }).click();
-    const sourceJson = await (await createSourceResp).json();
-    const sourceId: string = sourceJson.id;
+    await (await createSourceResp).json();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
 
@@ -92,115 +81,102 @@ test.describe("Tags (real backend)", () => {
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await itemsResp;
 
-    // 6. Add an item via the "Ajouter" button
-    await page.getByRole("button", { name: /Ajouter/ }).click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+    // 6. Add an item — "Ajouter" opens create modal on top of list detail (ui-6)
+    await page.getByRole("button", { name: /Ajouter/ }).first().click();
+    await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Fill the title
-    await page
-      .locator("[data-tag-editor]")
-      .first()
-      .fill(ITEM_TITLE);
+    // Fill the title via TagEditor (TipTap contentEditable — use keyboard)
+    const createTitle = page.locator("[data-tag-editor]").first()
+      .locator('[contenteditable]');
+    await createTitle.click();
+    await page.keyboard.type(ITEM_TITLE);
 
-    // 7. In the description TagEditor, type `{LIS` to trigger autocomplete
-    const descEditor = page.locator("[data-tag-editor]").nth(1);
+    // 7. In the description TagEditor, trigger autocomplete with `{L`
+    const descEditor = page.locator("[data-tag-editor]").nth(1)
+      .locator('[contenteditable]');
     await descEditor.click();
-    // TipTap uses contentEditable — use type() which sends keystrokes.
-    await descEditor.press("{");
-    await page.waitForTimeout(200); // debounce + API call
-    await descEditor.press("L");
-    await page.waitForTimeout(300);
+    await page.keyboard.type("{L");
+    await page.waitForTimeout(500); // debounce + API call
 
-    // The suggestion popover should be visible with the LIST type and matching objects
+    // The suggestion popover should appear
     const popover = page.locator('[role="listbox"]');
     await expect(popover).toBeVisible({ timeout: 5_000 });
-
-    // Verify the LIST type entry is shown
     await expect(popover.locator('[role="option"]').first()).toBeVisible({
       timeout: 3_000,
     });
 
-    // 8. Select the first item (the TARGET list) by pressing Enter
-    // First press ArrowDown to skip the "Type LIST" entry, then Enter on the object
+    // 8. Select the TARGET list from the popover (ArrowDown past "Type")
     await descEditor.press("ArrowDown");
     await descEditor.press("Enter");
-
-    // The popover should close
     await expect(popover).not.toBeVisible({ timeout: 3_000 });
 
-    // 9. Verify the raw tag {LIST:N} was inserted
-    // Wait for the resolve API call
+    // 9. Wait for resolve API call → chip gets title
     const resolveResp = page.waitForResponse(
       (r) => r.url().endsWith("/refs/resolve") && r.request().method() === "POST",
       { timeout: 15_000 },
     );
     await resolveResp;
-
-    // The chip should now show the resolved title
     await expect(
       page.locator(".tag-chip--resolved").first(),
     ).toBeVisible({ timeout: 10_000 });
 
-    // 10. Save the item
+    // 10. Save the item ("Créer" in the create modal)
+    const createItemResp = page.waitForResponse(
+      (r) => r.url().includes("/items") && r.request().method() === "POST",
+      { timeout: 15_000 },
+    );
     await page.getByRole("button", { name: "Créer", exact: true }).click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5_000 }); // back to list detail
+    await createItemResp;
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5_000 });
 
-    // Close list detail
+    // Close the list detail modal
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
 
-    // 11. Re-open the item to check persistence
+    // 11. Re-open the item to check chip persistence + cross-module click
     await page.getByText(SOURCE_LIST).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await page.waitForResponse(
       (r) => r.url().includes("/items") && r.request().method() === "GET",
       { timeout: 15_000 },
     );
-    // Click on the item row
     await page.getByText(ITEM_TITLE).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
 
-    // The chip should still be there (resolved)
+    // Chip resolved (title from resolve)
     await expect(
       page.locator(".tag-chip--resolved").first(),
     ).toBeVisible({ timeout: 10_000 });
 
-    // 12. Click the chip → should open the TARGET list modal (cross-module)
+    // 12. Click the chip → opens TARGET list modal (stacked on item edit + source detail)
     await page.locator(".tag-chip--resolved").first().click();
-    // Wait for the target list detail modal
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    // The modal should show the target list's title
+    await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(TARGET_LIST).first()).toBeVisible({
       timeout: 5_000,
     });
 
-    // 13. Close both modals, then delete the target list
-    await page.keyboard.press("Escape"); // close target list detail
+    // 13. Close all modals, then delete the TARGET list from the grid
+    await page.keyboard.press("Escape"); // target detail
     await page.waitForTimeout(300);
-    await page.keyboard.press("Escape"); // close item edit
+    await page.keyboard.press("Escape"); // item edit
     await page.waitForTimeout(300);
-    await page.keyboard.press("Escape"); // close source list detail
+    await page.keyboard.press("Escape"); // source detail
     await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
 
-    // Delete the target list
-    // Open the target list, then edit → delete
-    await page.getByText(TARGET_LIST).first().click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    // Click "..." menu button (EditListModal opener)
-    await page.locator('button[aria-label*="Options"]').first().click();
+    // Delete from the grid card (two-step: "Modifier la liste" → "Supprimer la liste" → "Oui, supprimer")
+    const targetCard = page.locator(".card").filter({ hasText: TARGET_LIST });
+    await targetCard.getByRole("button", { name: "Modifier la liste" }).click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
 
-    // Click delete
+    await page.getByRole("button", { name: "Supprimer la liste" }).click();
     const deleteResp = page.waitForResponse(
-      (r) =>
-        r.url().includes("/modules/lists") &&
-        r.request().method() === "DELETE",
+      (r) => r.url().includes("/modules/lists") && r.request().method() === "DELETE",
       { timeout: 15_000 },
     );
-    await page.getByRole("button", { name: /Supprimer/ }).click();
+    await page.getByRole("button", { name: "Oui, supprimer" }).click();
     await deleteResp;
 
-    // 14. Re-open the source list item — the chip should now be broken
+    // 14. Re-open source item — chip should be broken
     await page.getByText(SOURCE_LIST).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await page.waitForResponse(
@@ -208,7 +184,8 @@ test.describe("Tags (real backend)", () => {
       { timeout: 15_000 },
     );
     await page.getByText(ITEM_TITLE).first().click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+    // Item edit modal opens stacked on list detail
+    await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
     // Wait for resolve
     const resolveResp2 = page.waitForResponse(
@@ -217,11 +194,10 @@ test.describe("Tags (real backend)", () => {
     );
     await resolveResp2;
 
-    // The chip should now be broken (exists=false → "__broken__")
+    // Chip is now broken
     await expect(
       page.locator(".tag-chip--broken").first(),
     ).toBeVisible({ timeout: 10_000 });
-    // It should display "(supprimé)"
     await expect(page.locator(".tag-chip--broken").first()).toContainText(
       "supprimé",
     );

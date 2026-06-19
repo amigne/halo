@@ -1,12 +1,8 @@
 /**
- * E2E tests — Lists module (étape 4-6).
+ * E2E tests — Lists module (étape 4-6, repaired 5-7).
  *
  * Runs against the **real** backend stack.  The test user is seeded
- * automatically by `global-setup.ts` (register + verify via mailpit).
- *
- * Prerequisites:
- *   docker compose -f docker-compose.dev.yml --profile postgres up -d
- *   cd src/frontend && npx playwright test
+ * automatically by ``global-setup.ts`` (register + verify via mailpit).
  */
 
 import { readFileSync } from "node:fs";
@@ -25,12 +21,11 @@ const LIST_NAME = `Courses E2E ${Date.now()}`;
 const ITEM_NAME = "Pain complet bio";
 
 test.describe("Lists (real backend)", () => {
-  test("full flow: create list, add item, autosave on blur, reload persists", async ({
+  test("full flow: create list, add item, edit, reload persists", async ({
     page,
   }) => {
     test.setTimeout(180_000);
 
-    // Set French locale
     await page.addInitScript(() => {
       localStorage.setItem("halo.lang", "fr");
     });
@@ -44,7 +39,7 @@ test.describe("Lists (real backend)", () => {
     await page.waitForURL("**/", { timeout: 15_000 });
     await page.waitForSelector('header[role="banner"]', { timeout: 10_000 });
 
-    // 2. Navigate to Lists and wait for API
+    // 2. Navigate to Lists
     const listsResp = page.waitForResponse(
       (r) => r.url().endsWith("/modules/lists") && r.request().method() === "GET",
       { timeout: 15_000 },
@@ -62,11 +57,9 @@ test.describe("Lists (real backend)", () => {
     );
     await page.getByRole("button", { name: "Créer", exact: true }).click();
     await createResp;
-    // Verify the list card appeared
     await expect(page.getByText(LIST_NAME).first()).toBeVisible({ timeout: 10_000 });
 
-    // 4. Open list via click on card
-    // Register response promises BEFORE clicking (requests fire on mount)
+    // 4. Open list detail
     const itemsResp = page.waitForResponse(
       (r) => r.url().includes("/items") && r.request().method() === "GET",
       { timeout: 15_000 },
@@ -74,52 +67,58 @@ test.describe("Lists (real backend)", () => {
     await page.getByText(LIST_NAME).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await itemsResp;
-    // Wait for items section to render (empty state or count heading)
-    await expect(
-      page.locator('h3:has-text("élément")').first(),
-    ).toBeVisible({ timeout: 15_000 });
 
-    // 5. Add an item
-    // Register response promise BEFORE clicking (POST fires on click)
+    // 5. Add an item — "Ajouter" opens the create modal on top of list detail (ui-6)
+    await page.getByRole("button", { name: /Ajouter/ }).first().click();
+    await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
+
+    // Fill title via TagEditor (target the contentEditable div)
+    const createTitle = page.locator("[data-tag-editor]").first()
+      .locator('[contenteditable="true"]');
+    await createTitle.click();
+    await createTitle.fill("Nouvel élément");
     const addResp = page.waitForResponse(
       (r) => r.url().includes("/items") && r.request().method() === "POST",
       { timeout: 15_000 },
     );
-    await page.getByRole("button", { name: /Ajouter/ }).first().click();
+    await page.getByRole("button", { name: "Créer", exact: true }).click();
     await addResp;
-    // 5b. Verify read mode: the new item title is visible as TEXT (not input)
+
+    // Item title should be visible in the list detail
     await expect(page.getByText("Nouvel élément")).toBeVisible({ timeout: 10_000 });
 
-    // 6. Click row to enter edit mode, edit, autosave, return to read
+    // 6. Click item row → opens ListItemModal for editing (stacked on list detail)
     await page.getByText("Nouvel élément").click();
-    const itemInput = page.getByLabel("Titre").last();
-    await expect(itemInput).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    await itemInput.clear();
-    await itemInput.fill(ITEM_NAME);
+    // Edit the title via TagEditor
+    const titleEditor = page.locator("[data-tag-editor]").first()
+      .locator('[contenteditable="true"]');
+    await titleEditor.click();
+    await titleEditor.fill(ITEM_NAME);
+
+    // Blur to trigger autosave (click the modal header)
     const patchResp = page.waitForResponse(
       (r) => r.url().includes("/items/") && r.request().method() === "PATCH",
       { timeout: 15_000 },
     );
-    await itemInput.blur();
+    await page.getByRole("heading", { name: "Élément" }).click();
     await patchResp;
-    await expect(page.getByText("Enregistré").first()).toBeVisible({
-      timeout: 10_000,
-    });
 
-    // Exit edit mode
-    await page.getByLabel("Terminé").click();
+    // Close both modals
+    await page.keyboard.press("Escape"); // item edit
+    await page.waitForTimeout(300);
+    await page.keyboard.press("Escape"); // list detail
+    // After closing all, check no dialogs remain.  .first() avoids strict-mode
+    // if a single stray dialog lingers.
+    await expect(page.getByRole("dialog").first()).not.toBeVisible({ timeout: 5_000 });
 
-    // Verify read mode shows updated title as text
-    await expect(page.getByText(ITEM_NAME)).toBeVisible({ timeout: 10_000 });
-
-    // 7. Reload and verify persistence (title still visible as text)
+    // 7. Re-open and verify persistence
     const itemsResp2 = page.waitForResponse(
       (r) => r.url().includes("/items") && r.request().method() === "GET",
       { timeout: 15_000 },
     );
-    await page.reload();
-    await page.waitForSelector('header[role="banner"]', { timeout: 10_000 });
+    await page.getByText(LIST_NAME).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
     await itemsResp2;
     await expect(page.getByText(ITEM_NAME)).toBeVisible({ timeout: 10_000 });
