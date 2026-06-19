@@ -100,43 +100,32 @@ export function ListItemRow({
   );
 
   return (
-    <div
-      className="flex items-center gap-3 py-2 cursor-pointer group"
-      onClick={() => onClick(item.id)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick(item.id);
-        }
-      }}
-      aria-label={`${t("lists.item.edit")} : ${item.title}`}
-    >
-      {/* is_done checkbox */}
+    <div className="relative flex items-center gap-3 py-2 group">
+      {/* is_done checkbox — sits above the title's stretched overlay (z-10) so
+          toggling it doesn't open the item modal. */}
       {hasField("is_done") && (
-        <label
-          className="flex items-center shrink-0 cursor-pointer"
-          onClick={handleToggleDone}
-        >
-          <input
-            type="checkbox"
-            checked={item.is_done}
-            onChange={handleToggleDone}
-            className="h-5 w-5 rounded border-border text-primary focus:ring-focus-ring cursor-pointer"
-            aria-label={t("lists.item.done")}
-          />
-        </label>
+        <input
+          type="checkbox"
+          checked={item.is_done}
+          onChange={handleToggleDone}
+          className="relative z-10 h-5 w-5 shrink-0 rounded border-border text-primary focus:ring-focus-ring cursor-pointer"
+          aria-label={t("lists.item.done")}
+        />
       )}
 
-      {/* Title — strikethrough + muted when done */}
-      <span
-        className={`flex-1 min-w-0 truncate text-sm ${
+      {/* Title — a stretched-link button: its ::after overlay covers the whole
+          row so a click anywhere (except the checkbox) opens the item modal.
+          Keyboard-accessible, no nested role=button container (U-123). */}
+      <button
+        type="button"
+        onClick={() => onClick(item.id)}
+        aria-label={`${t("lists.item.edit")} : ${item.title}`}
+        className={`flex-1 min-w-0 truncate text-left text-sm rounded after:absolute after:inset-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1 ${
           item.is_done ? "line-through text-text-muted" : "text-text"
         }`}
       >
         {item.title || " "}
-      </span>
+      </button>
 
       {/* Priority badge */}
       {item.priority != null && hasField("priority") && (

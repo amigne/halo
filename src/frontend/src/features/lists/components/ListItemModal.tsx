@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRoutedModal } from "@/shared/modal";
 import { AutosaveField } from "@/shared/autosave/AutosaveField";
-import { SaveIndicator } from "@/shared/autosave/SaveIndicator";
 import { Button } from "@/shared/ui/Button";
 import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
@@ -68,7 +67,7 @@ export function ListItemModal({ onClose, modalKey }: ListItemModalProps) {
 
   // ── Data ───────────────────────────────────────────────────────────────────
 
-  const { data: list, isLoading: listLoading } = useQuery({
+  const { data: list, isLoading: listLoading, isError: listError } = useQuery({
     queryKey: ["list", listId],
     queryFn: () => fetchList(listId),
     enabled: !!listId,
@@ -84,7 +83,10 @@ export function ListItemModal({ onClose, modalKey }: ListItemModalProps) {
     ? items?.find((i) => i.id === itemId) ?? null
     : null;
 
-  const isLoading = listLoading || itemsLoading || (!!listId && !list);
+  // Don't gate on `!list` once the query has settled in error, otherwise a
+  // failed fetch would spin forever (handled by the `listError` guard below).
+  const isLoading =
+    listLoading || itemsLoading || (!!listId && !list && !listError);
 
   // ── Field schema ───────────────────────────────────────────────────────────
 
@@ -192,12 +194,20 @@ export function ListItemModal({ onClose, modalKey }: ListItemModalProps) {
     [onClose],
   );
 
-  // ── Render: loading ────────────────────────────────────────────────────────
+  // ── Render: loading / error ─────────────────────────────────────────────────
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner />
+      </div>
+    );
+  }
+
+  if (listError) {
+    return (
+      <div className="py-8 text-center text-text-muted">
+        {t("lists.error.notFound")}
       </div>
     );
   }
@@ -316,32 +326,25 @@ export function ListItemModal({ onClose, modalKey }: ListItemModalProps) {
         label={t("lists.item.title")}
       />
 
-      {/* Description — autosave via TagEditor */}
+      {/* Description — autosave via TagEditor.
+          The wrapper's onBlur/onKeyDown catch the textarea's bubbling
+          focusout/keydown (React onBlur === focusout, which bubbles), so the
+          debounced save fires when focus leaves the field and Escape restores
+          the value. The AutosaveField label row already renders a SaveIndicator. */}
       {hasField("description") && (
         <AutosaveField
           value={item.description ?? ""}
           fieldKey="description"
           onPatch={patchItem}
           label={t("lists.item.description")}
-          renderInput={({ localValue, onChange, onBlur, handleKeyDown, status, error, retry, inputId }) => (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <TagEditor
-                  value={localValue}
-                  onChange={onChange}
-                  variant="multiline"
-                  placeholder={t("lists.item.descriptionPlaceholder")}
-                  label={t("lists.item.description")}
-                />
-                <SaveIndicator status={status} error={error} onRetry={retry} />
-              </div>
-              {/* Hidden input to bind autosave events */}
-              <input
-                id={inputId}
-                type="hidden"
+          renderInput={({ localValue, onChange, onBlur, handleKeyDown }) => (
+            <div onBlur={onBlur} onKeyDown={handleKeyDown}>
+              <TagEditor
                 value={localValue}
-                onBlur={onBlur}
-                onKeyDown={handleKeyDown}
+                onChange={onChange}
+                variant="multiline"
+                placeholder={t("lists.item.descriptionPlaceholder")}
+                label={t("lists.item.description")}
               />
             </div>
           )}
@@ -390,21 +393,18 @@ export function ListItemModal({ onClose, modalKey }: ListItemModalProps) {
             await patchItem({ notify_before: num });
           }}
           label={t("lists.item.notifyBefore")}
-          renderInput={({ localValue, onChange, onBlur, handleKeyDown, status, error, retry, inputId }) => (
-            <div className="flex items-center gap-2">
-              <input
-                id={inputId}
-                type="number"
-                min="0"
-                value={localValue}
-                onChange={(e) => onChange(e.target.value)}
-                onBlur={onBlur}
-                onKeyDown={handleKeyDown}
-                className="w-24 px-2 py-1 rounded border border-border-strong bg-surface text-text text-sm placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1"
-                placeholder="0"
-              />
-              <SaveIndicator status={status} error={error} onRetry={retry} />
-            </div>
+          renderInput={({ localValue, onChange, onBlur, handleKeyDown, inputId }) => (
+            <input
+              id={inputId}
+              type="number"
+              min="0"
+              value={localValue}
+              onChange={(e) => onChange(e.target.value)}
+              onBlur={onBlur}
+              onKeyDown={handleKeyDown}
+              className="w-24 px-2 py-1 rounded border border-border-strong bg-surface text-text text-sm placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-1"
+              placeholder="0"
+            />
           )}
         />
       )}

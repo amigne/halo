@@ -8,6 +8,7 @@ import { EmptyState } from "@/shared/ui/EmptyState";
 import { useRoutedModal } from "@/shared/modal";
 import { useToast } from "@/shared/ui/Toast";
 import { getIconPath } from "@/shared/ui/icon-data";
+import { useAuth } from "@/features/auth/auth-store";
 import { fetchList, fetchItems, updateItem } from "../api";
 import { ListItemRow } from "./ListItemRow";
 
@@ -65,6 +66,8 @@ export function ListDetailModal({ onClose: _onClose, modalKey }: ListDetailModal
   const queryClient = useQueryClient();
   const { openModal } = useRoutedModal();
   const { addToast } = useToast();
+  const { data: auth } = useAuth();
+  const timezone = auth?.user?.timezone ?? "UTC";
 
   const rawId = modalKey?.replace(/^list\//, "") ?? "";
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -164,7 +167,7 @@ export function ListDetailModal({ onClose: _onClose, modalKey }: ListDetailModal
                 key={item.id}
                 item={item}
                 fieldSchema={fieldSchema}
-                timezone="UTC"
+                timezone={timezone}
                 onToggleDone={handleToggleDone}
                 onClick={(itemId) => openModal(`list-item/${itemId}`)}
               />
