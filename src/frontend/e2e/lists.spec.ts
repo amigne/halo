@@ -74,9 +74,8 @@ test.describe("Lists (real backend)", () => {
     await page.getByRole("button", { name: /Ajouter/ }).first().click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Fill title via TagEditor (target the contentEditable div)
-    const createTitle = page.locator("[data-tag-editor]").first()
-      .locator('[contenteditable="true"]');
+    // Fill title via TagEditor (data-tag-editor IS the contentEditable div)
+    const createTitle = page.locator("[data-tag-editor]").first();
     await createTitle.click();
     await createTitle.fill("Nouvel élément");
     const addResp = page.waitForResponse(
@@ -93,9 +92,8 @@ test.describe("Lists (real backend)", () => {
     await page.getByText("Nouvel élément").click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Edit the title via TagEditor
-    const titleEditor = page.locator("[data-tag-editor]").first()
-      .locator('[contenteditable="true"]');
+    // Edit the title via TagEditor (data-tag-editor IS the contentEditable)
+    const titleEditor = page.locator("[data-tag-editor]").first();
     await titleEditor.click();
     await titleEditor.fill(ITEM_NAME);
 
