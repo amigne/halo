@@ -166,7 +166,7 @@ export function Tooltip({
             ref={tooltipRef}
             id={tooltipId}
             role="tooltip"
-            className="fixed z-[var(--z-tooltip)] px-3 py-1.5 text-xs rounded-md shadow-md bg-text text-surface max-w-xs pointer-events-none"
+            className="fixed z-[var(--z-tooltip)] px-2 py-1 text-xs rounded shadow-md bg-text text-surface max-w-xs pointer-events-none"
             style={{
               top: `${coords.top}px`,
               left: `${coords.left}px`,

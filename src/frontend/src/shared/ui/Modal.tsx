@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import { Button } from "./Button";
 
 // ── Focusable selector ───────────────────────────────────────────────────────
 
@@ -55,6 +56,8 @@ interface ModalProps {
   children: ReactNode;
   /** Optional ref to the triggering element for focus restoration on close. */
   triggerRef?: RefObject<HTMLElement | null>;
+  /** Optional footer actions (e.g. `<Button>` elements). Rendered only when provided. */
+  footerActions?: ReactNode;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -67,10 +70,12 @@ interface ModalProps {
  * - **Focus trap**: Tab / Shift+Tab cycle within the modal (U-122)
  * - Initial focus on the first focusable element
  * - **Focus restoration** to the trigger element on close (U-122)
- * - Z-index: overlay uses `--z-overlay`, modal panel uses `--z-modal` (U-113)
- * - Respects `prefers-reduced-motion` (U-125)
+ * - Z-index: overlay `var(--z-overlay)`, panel `var(--z-modal)` (U-113)
+ * - Overlay fade + panel scale transition 150ms ease-out
+ * - Respects `prefers-reduced-motion` via the global CSS rule
  * - Body scroll is locked while the modal is open
  * - Rendered via portal at `document.body`
+ * - Footer only rendered when `footerActions` is provided — NEVER a "Close" button
  */
 export function Modal({
   open,
@@ -78,6 +83,7 @@ export function Modal({
   title,
   children,
   triggerRef,
+  footerActions,
 }: ModalProps) {
   const { t } = useTranslation();
   const titleId = useId();
@@ -200,18 +206,25 @@ export function Modal({
           <h2 id={titleId} className="text-lg font-semibold text-text">
             {title}
           </h2>
-          <button
-            type="button"
+          <Button
+            size="icon"
+            variant="ghost"
             onClick={onClose}
             aria-label={t("ui.modal.close")}
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-text-muted transition-colors hover:bg-border focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11"
           >
             ✕
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto px-4 py-4">{children}</div>
+        <div className="overflow-y-auto px-4 py-4 text-sm">{children}</div>
+
+        {/* Footer — only rendered when actions are provided */}
+        {footerActions && (
+          <div className="flex justify-end gap-2 border-t border-border px-4 py-3">
+            {footerActions}
+          </div>
+        )}
       </div>
     </div>,
     document.body,

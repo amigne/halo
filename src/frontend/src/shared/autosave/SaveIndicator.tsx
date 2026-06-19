@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Button } from "@/shared/ui/Button";
 import { Spinner } from "@/shared/ui/Spinner";
 import type { SaveStatus } from "./use-autosave-field";
 
@@ -25,7 +26,7 @@ export interface SaveIndicatorProps {
  * - `saved` → checkmark + "Saved" (ARIA-live `polite`, auto-fades)
  * - `error` → warning icon + message + retry button (ARIA-live `assertive`, U-064)
  *
- * Touch target of the retry button ≥ 44×44px (U-014).
+ * All states use `text-xs` and `gap-1` for compact inline display.
  */
 export function SaveIndicator({
   status,
@@ -39,7 +40,7 @@ export function SaveIndicator({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 text-sm ${className}`}
+      className={`inline-flex items-center gap-1 text-xs ${className}`}
       aria-live={status === "error" ? "assertive" : "polite"}
       aria-atomic="true"
     >
@@ -95,13 +96,9 @@ export function SaveIndicator({
             {error ?? t("autosave.error")}
           </span>
           {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-2 py-1 text-xs font-medium rounded border border-danger text-danger bg-transparent hover:bg-danger/10 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:outline-none"
-            >
+            <Button size="sm" variant="danger" onClick={onRetry}>
               {t("autosave.retry")}
-            </button>
+            </Button>
           )}
         </>
       )}

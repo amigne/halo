@@ -6,9 +6,9 @@ interface SpinnerProps {
 }
 
 const sizeClasses: Record<string, string> = {
-  sm: "h-4 w-4 border-2",
-  md: "h-8 w-8 border-[3px]",
-  lg: "h-12 w-12 border-4",
+  sm: "h-4 w-4 border-2",       /* 16px */
+  md: "h-6 w-6 border-[3px]",   /* 24px */
+  lg: "h-10 w-10 border-4",     /* 40px */
 };
 
 /**
@@ -16,7 +16,7 @@ const sizeClasses: Record<string, string> = {
  *
  * - `role="status"` + i18n `aria-label` for screen readers
  * - Respects `prefers-reduced-motion` via the global CSS rule + Tailwind variant
- * - Sizes: sm=16px, md=32px, lg=48px
+ * - Sizes: sm=16px, md=24px, lg=40px
  */
 export function Spinner({ size = "md", className = "" }: SpinnerProps) {
   const { t } = useTranslation();
