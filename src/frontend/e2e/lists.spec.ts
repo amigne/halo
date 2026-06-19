@@ -74,10 +74,11 @@ test.describe("Lists (real backend)", () => {
     await page.getByRole("button", { name: /Ajouter/ }).first().click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Fill title via TagEditor (data-tag-editor IS the contentEditable div)
+    // Fill title via TagEditor (data-tag-editor IS the contentEditable div).
+    // ProseMirror ignores .fill() — use keyboard simulation instead.
     const createTitle = page.locator("[data-tag-editor]").first();
     await createTitle.click();
-    await createTitle.fill("Nouvel élément");
+    await page.keyboard.type("Nouvel élément");
     const addResp = page.waitForResponse(
       (r) => r.url().includes("/items") && r.request().method() === "POST",
       { timeout: 15_000 },
@@ -92,10 +93,11 @@ test.describe("Lists (real backend)", () => {
     await page.getByText("Nouvel élément").click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Edit the title via TagEditor (data-tag-editor IS the contentEditable)
+    // Edit the title via TagEditor (ProseMirror — use keyboard)
     const titleEditor = page.locator("[data-tag-editor]").first();
     await titleEditor.click();
-    await titleEditor.fill(ITEM_NAME);
+    await page.keyboard.press("Control+a");
+    await page.keyboard.type(ITEM_NAME);
 
     // Blur to trigger autosave (click the modal header)
     const patchResp = page.waitForResponse(

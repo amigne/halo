@@ -87,15 +87,15 @@ test.describe("Tags (real backend)", () => {
     await page.getByRole("button", { name: /Ajouter/ }).first().click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Fill the title via TagEditor (data-tag-editor IS the contentEditable)
+    // Fill the title via TagEditor (ProseMirror — use keyboard simulation)
     const createTitle = page.locator("[data-tag-editor]").first();
     await createTitle.click();
-    await createTitle.fill(ITEM_TITLE);
+    await page.keyboard.type(ITEM_TITLE);
 
     // 7. In the description TagEditor, trigger autocomplete with `{L`
     const descEditor = page.locator("[data-tag-editor]").nth(1);
     await descEditor.click();
-    await descEditor.fill("{L");
+    await page.keyboard.type("{L");
     await page.waitForTimeout(500); // debounce + API call
 
     // The suggestion popover should appear
