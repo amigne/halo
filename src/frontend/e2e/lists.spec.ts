@@ -20,6 +20,8 @@ const TEST_PASSWORD = CREDS.password;
 const LIST_NAME = `Courses E2E ${Date.now()}`;
 const ITEM_NAME = "Pain complet bio";
 
+test.describe.configure({ mode: "serial" });
+
 test.describe("Lists (real backend)", () => {
   test("full flow: create list, add item, edit, reload persists", async ({
     page,
@@ -109,9 +111,8 @@ test.describe("Lists (real backend)", () => {
     await page.keyboard.press("Escape"); // item edit
     await page.waitForTimeout(300);
     await page.keyboard.press("Escape"); // list detail
-    // After closing all, check no dialogs remain.  .first() avoids strict-mode
-    // if a single stray dialog lingers.
-    await expect(page.getByRole("dialog").first()).not.toBeVisible({ timeout: 5_000 });
+    // After closing all, check no dialogs remain.
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 5_000 });
 
     // 7. Re-open and verify persistence
     const itemsResp2 = page.waitForResponse(

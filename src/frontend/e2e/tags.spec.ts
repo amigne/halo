@@ -20,6 +20,8 @@ const TARGET_LIST = `Liste cible ${Date.now()}`;
 const SOURCE_LIST = `Liste source ${Date.now()}`;
 const ITEM_TITLE = "Élément avec balise";
 
+test.describe.configure({ mode: "serial" });
+
 test.describe("Tags (real backend)", () => {
   test("full flow: autocomplete → chip → click → broken", async ({ page }) => {
     test.setTimeout(240_000);
@@ -57,7 +59,7 @@ test.describe("Tags (real backend)", () => {
     const targetJson = await (await createTargetResp).json();
     // Close the auto-opened modal
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 5_000 });
 
     // 4. Create the SOURCE list
     const createSourceResp = page.waitForResponse(
@@ -70,7 +72,7 @@ test.describe("Tags (real backend)", () => {
     await page.getByRole("button", { name: "Créer", exact: true }).click();
     await (await createSourceResp).json();
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 5_000 });
 
     // 5. Open the source list
     const itemsResp = page.waitForResponse(
@@ -87,13 +89,13 @@ test.describe("Tags (real backend)", () => {
 
     // Fill the title via TagEditor (TipTap contentEditable — use keyboard)
     const createTitle = page.locator("[data-tag-editor]").first()
-      .locator('[contenteditable]');
+      .locator('[contenteditable="true"]');
     await createTitle.click();
     await page.keyboard.type(ITEM_TITLE);
 
     // 7. In the description TagEditor, trigger autocomplete with `{L`
     const descEditor = page.locator("[data-tag-editor]").nth(1)
-      .locator('[contenteditable]');
+      .locator('[contenteditable="true"]');
     await descEditor.click();
     await page.keyboard.type("{L");
     await page.waitForTimeout(500); // debounce + API call
@@ -131,7 +133,7 @@ test.describe("Tags (real backend)", () => {
 
     // Close the list detail modal
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 5_000 });
 
     // 11. Re-open the item to check chip persistence + cross-module click
     await page.getByText(SOURCE_LIST).first().click();
@@ -141,7 +143,8 @@ test.describe("Tags (real backend)", () => {
       { timeout: 15_000 },
     );
     await page.getByText(ITEM_TITLE).first().click();
-    await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
+    // Item edit modal opens stacked on list detail
+    await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
     // Chip resolved (title from resolve)
     await expect(
@@ -161,10 +164,13 @@ test.describe("Tags (real backend)", () => {
     await page.keyboard.press("Escape"); // item edit
     await page.waitForTimeout(300);
     await page.keyboard.press("Escape"); // source detail
-    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 5_000 });
 
-    // Delete from the grid card (two-step: "Modifier la liste" → "Supprimer la liste" → "Oui, supprimer")
-    const targetCard = page.locator(".card").filter({ hasText: TARGET_LIST });
+    // Delete from the grid card (two-step: "Modifier la liste" → "Supprimer la liste" → "Oui, supprimer").
+    // Navigate from the title button up to the card container (button → row div → card div),
+    // then find the menu button within.
+    const targetCard = page.getByRole("button", { name: TARGET_LIST })
+      .locator("xpath=../..");
     await targetCard.getByRole("button", { name: "Modifier la liste" }).click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
 
