@@ -151,13 +151,11 @@ test.describe("Tags (real backend)", () => {
     // Close the list detail modal
     await closeAllDialogs(page);
 
-    // 11. Re-open the item to check chip persistence + cross-module click
+    // 11. Re-open the item to check chip persistence + cross-module click.
+    // No GET /items wait: React Query may serve items from cache on re-open;
+    // the item-row click below auto-waits for the title to render.
     await page.getByText(SOURCE_LIST).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    await page.waitForResponse(
-      (r) => r.url().includes("/items") && r.request().method() === "GET",
-      { timeout: 15_000 },
-    );
     await page.getByText(ITEM_TITLE).first().click();
     // Item edit modal opens stacked on list detail
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
@@ -193,28 +191,20 @@ test.describe("Tags (real backend)", () => {
     await page.getByRole("button", { name: "Oui, supprimer" }).click();
     await deleteResp;
 
-    // 14. Re-open source item — chip should be broken
+    // 14. Re-open source item — chip should be broken.
+    // No GET /items wait (cache may serve on re-open); the row click auto-waits.
     await page.getByText(SOURCE_LIST).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    await page.waitForResponse(
-      (r) => r.url().includes("/items") && r.request().method() === "GET",
-      { timeout: 15_000 },
-    );
     await page.getByText(ITEM_TITLE).first().click();
     // Item edit modal opens stacked on list detail
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Wait for resolve
-    const resolveResp2 = page.waitForResponse(
-      (r) => r.url().endsWith("/refs/resolve") && r.request().method() === "POST",
-      { timeout: 15_000 },
-    );
-    await resolveResp2;
-
-    // Chip is now broken
+    // Chip is now broken (target list was deleted → resolve returns exists=false).
+    // Don't wait on POST /refs/resolve: it may be served from the resolve cache
+    // (staleTime); assert the UI state directly with a generous timeout.
     await expect(
       page.locator(".tag-chip--broken").first(),
-    ).toBeVisible({ timeout: 10_000 });
+    ).toBeVisible({ timeout: 20_000 });
     await expect(page.locator(".tag-chip--broken").first()).toContainText(
       "supprimé",
     );

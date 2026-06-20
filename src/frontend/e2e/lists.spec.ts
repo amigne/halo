@@ -130,14 +130,12 @@ test.describe("Lists (real backend)", () => {
     // Close both modals (item edit, then list detail)
     await closeAllDialogs(page);
 
-    // 7. Re-open and verify persistence
-    const itemsResp2 = page.waitForResponse(
-      (r) => r.url().includes("/items") && r.request().method() === "GET",
-      { timeout: 15_000 },
-    );
+    // 7. Re-open and verify persistence.
+    // Don't wait on a GET /items here: on re-open React Query may serve the
+    // (invalidated-then-refetched) items from cache without a new request.
+    // Assert on the rendered item text instead — that proves persistence.
     await page.getByText(LIST_NAME).first().click();
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 10_000 });
-    await itemsResp2;
     await expect(page.getByText(ITEM_NAME)).toBeVisible({ timeout: 10_000 });
   });
 });
