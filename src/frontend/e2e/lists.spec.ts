@@ -8,7 +8,27 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * Close every open modal by clicking the top-most ✕ ("Fermer la modale")
+ * button — more robust than Escape, whose handling depends on focus being
+ * on the dialog (focus may sit in the TipTap editor after typing).
+ */
+async function closeAllDialogs(page: Page): Promise<void> {
+  for (let i = 0; i < 6; i++) {
+    const count = await page.getByRole("dialog").count();
+    if (count === 0) return;
+    await page
+      .getByRole("dialog")
+      .last()
+      .getByRole("button", { name: "Fermer la modale" })
+      .click();
+    await expect(page.getByRole("dialog")).toHaveCount(count - 1, {
+      timeout: 5_000,
+    });
+  }
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -104,15 +124,11 @@ test.describe("Lists (real backend)", () => {
       (r) => r.url().includes("/items/") && r.request().method() === "PATCH",
       { timeout: 15_000 },
     );
-    await page.getByRole("heading", { name: "Élément" }).click();
+    await page.getByRole("heading", { name: "Élément", exact: true }).click();
     await patchResp;
 
-    // Close both modals
-    await page.keyboard.press("Escape"); // item edit
-    await page.waitForTimeout(300);
-    await page.keyboard.press("Escape"); // list detail
-    // After closing all, check no dialogs remain.
-    await expect(page.getByRole("dialog")).toHaveCount(0, { timeout: 5_000 });
+    // Close both modals (item edit, then list detail)
+    await closeAllDialogs(page);
 
     // 7. Re-open and verify persistence
     const itemsResp2 = page.waitForResponse(
