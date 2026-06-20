@@ -8,7 +8,7 @@ import { Input } from "@/shared/ui/Input";
 import { Select } from "@/shared/ui/Select";
 import { Toggle } from "@/shared/ui/Toggle";
 import { DateTimePicker } from "@/shared/ui/DateTimePicker";
-import { TagEditor } from "@/shared/ui/TagEditor";
+import { TagEditor } from "@/shared/tageditor";
 import { Spinner } from "@/shared/ui/Spinner";
 import { useToast } from "@/shared/ui/Toast";
 import { useAuth } from "@/features/auth/auth-store";
