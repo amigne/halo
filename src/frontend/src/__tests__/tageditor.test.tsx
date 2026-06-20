@@ -7,7 +7,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { I18nextProvider } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { StrictMode, type ReactNode } from "react";
 
 import { i18next } from "@/shared/i18n";
 import { TagEditor } from "@/shared/tageditor";
@@ -56,11 +56,17 @@ beforeEach(() => {
   });
 });
 
+// Wrap in <StrictMode> to mirror the real app (app/main.tsx). StrictMode's
+// dev-mode mount→unmount→remount cycle is what exposed the TagEditor mount
+// bug (a manual editor.destroy() tearing down the live editor); rendering the
+// tests under StrictMode keeps that regression covered in CI.
 function Wrapper({ children }: { children: ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <I18nextProvider i18n={i18next}>{children}</I18nextProvider>
-    </QueryClientProvider>
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <I18nextProvider i18n={i18next}>{children}</I18nextProvider>
+      </QueryClientProvider>
+    </StrictMode>
   );
 }
 
@@ -79,6 +85,27 @@ describe("TagEditor", () => {
     for (const el of document.querySelectorAll("[data-tag-editor]")) {
       el.remove();
     }
+  });
+
+  // ── Mount under StrictMode ───────────────────────────────────────────────
+  // Regression guard for "TagEditor fails to mount in the (StrictMode) app":
+  // the ProseMirror contentEditable must attach — exactly what the E2E waits
+  // for. A manual editor.destroy() used to tear it down under StrictMode.
+  it("mounts the contentEditable editor under StrictMode", async () => {
+    render(
+      <Wrapper>
+        <TagEditor value="" onChange={vi.fn()} />
+      </Wrapper>,
+    );
+
+    await waitFor(
+      () => {
+        expect(
+          document.querySelector('[contenteditable="true"]'),
+        ).toBeTruthy();
+      },
+      { timeout: 5_000 },
+    );
   });
 
   // ── Rehydration ─────────────────────────────────────────────────────────

@@ -322,12 +322,11 @@ export function TagEditor({
     }
   }, [editor, value]);
 
-  // ── Cleanup ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      editor?.destroy();
-    };
-  }, [editor]);
+  // NOTE: do NOT manually call `editor.destroy()` here. `useEditor` already
+  // owns the editor lifecycle and destroys it on unmount. A manual destroy
+  // tied to `[editor]` runs during React StrictMode's dev-mode
+  // mount→unmount→remount cycle and tears down the live editor, so the
+  // ProseMirror contentEditable never attaches ("TagEditor fails to mount").
 
   return (
     <div ref={wrapperRef}>
