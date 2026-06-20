@@ -13,15 +13,27 @@ from halo_api.accounts.router import router as accounts_router
 from halo_api.accounts.users import router as users_router
 from halo_api.core.config import settings
 from halo_api.core.csrf import CSRFCustomHeaderMiddleware
-from halo_api.core.db import check_db, engine
+from halo_api.core.db import async_session, check_db, engine
 from halo_api.core.redis import check_redis, close_redis
 from halo_api.modules.lists.router import router as lists_router
+from halo_api.modules.registry import sync_registry
 from halo_api.refs.router import router as refs_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    """Application lifespan — clean up resources on shutdown."""
+    """Application lifespan — seed module rows on startup, clean up on shutdown.
+
+    Every registered module must have a row in the ``modules`` table so that
+    ``is_enabled`` returns True (modules are active by default). Without this
+    the lists CRUD still works — its router is mounted from the in-memory
+    registry — but ``/refs/search`` and ``/refs/resolve`` silently return
+    nothing, because they gate on ``is_enabled``. The test suite seeds this
+    via a fixture; production must do it here.
+    """
+    async with async_session() as session:
+        await sync_registry(session)
+        await session.commit()
     yield
     await close_redis()
     await engine.dispose()
