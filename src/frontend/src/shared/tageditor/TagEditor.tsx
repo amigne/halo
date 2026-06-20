@@ -71,7 +71,8 @@ function extractTagRefs(doc: ProseMirrorNode): TagRef[] {
  * Parse raw text and produce a ProseMirror document JSON structure
  * where ``{PREFIX:ref_no}`` patterns become ``tagChip`` nodes.
  *
- * Never emits an empty text node (ProseMirror forbids it).
+ * Every paragraph MUST have at least one child node — ProseMirror
+ * rejects ``content: []`` (invalid document).
  */
 function rawTextToDoc(raw: string): Record<string, unknown> {
   TAG_RE.lastIndex = 0;
@@ -97,6 +98,12 @@ function rawTextToDoc(raw: string): Record<string, unknown> {
     }
     if (last < line.length) {
       nodes.push({ type: "text", text: line.slice(last) });
+    }
+    // ProseMirror forbids a paragraph with no children.  When a line
+    // produces zero nodes (empty line with no tags), insert a single
+    // empty text node — the editor normalises this on first interaction.
+    if (nodes.length === 0) {
+      nodes.push({ type: "text", text: "" });
     }
     return nodes;
   };
@@ -217,7 +224,10 @@ export function TagEditor({
   // ── Editor setup ────────────────────────────────────────────────────────
   const editor = useEditor({
     extensions,
-    content: rawTextToDoc(value),
+    // rawTextToDoc can produce empty paragraphs (content: []) when
+    // value is "" — ProseMirror rejects that.  Pass an empty string
+    // directly for the null case; TipTap handles it gracefully.
+    content: value ? rawTextToDoc(value) : "",
     editable: !disabled,
     editorProps: {
       clipboardTextSerializer,
@@ -305,7 +315,10 @@ export function TagEditor({
     if (!editor) return;
     const currentRaw = docToRawText(editor.state.doc);
     if (value !== currentRaw) {
-      editor.commands.setContent(rawTextToDoc(value), { emitUpdate: false });
+      editor.commands.setContent(
+        value ? rawTextToDoc(value) : "",
+        { emitUpdate: false },
+      );
     }
   }, [editor, value]);
 
