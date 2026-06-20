@@ -87,13 +87,13 @@ test.describe("Tags (real backend)", () => {
     await page.getByRole("button", { name: /Ajouter/ }).first().click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Fill the title via TagEditor (ProseMirror — use keyboard simulation)
-    const createTitle = page.locator("[data-tag-editor]").first();
+    // Fill the title via TagEditor (target ProseMirror's contentEditable div)
+    const createTitle = page.locator('[contenteditable="true"]').first();
     await createTitle.click();
     await page.keyboard.type(ITEM_TITLE);
 
     // 7. In the description TagEditor, trigger autocomplete with `{L`
-    const descEditor = page.locator("[data-tag-editor]").nth(1);
+    const descEditor = page.locator('[contenteditable="true"]').nth(1);
     await descEditor.click();
     await page.keyboard.type("{L");
     await page.waitForTimeout(500); // debounce + API call

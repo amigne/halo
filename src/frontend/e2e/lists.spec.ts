@@ -74,9 +74,9 @@ test.describe("Lists (real backend)", () => {
     await page.getByRole("button", { name: /Ajouter/ }).first().click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Fill title via TagEditor (data-tag-editor IS the contentEditable div).
-    // ProseMirror ignores .fill() — use keyboard simulation instead.
-    const createTitle = page.locator("[data-tag-editor]").first();
+    // Fill title via TagEditor.  The ProseMirror editor renders a
+    // contentEditable div — use that as the interaction target.
+    const createTitle = page.locator('[contenteditable="true"]').first();
     await createTitle.click();
     await page.keyboard.type("Nouvel élément");
     const addResp = page.waitForResponse(
@@ -93,8 +93,8 @@ test.describe("Lists (real backend)", () => {
     await page.getByText("Nouvel élément").click();
     await expect(page.getByRole("dialog").last()).toBeVisible({ timeout: 10_000 });
 
-    // Edit the title via TagEditor (ProseMirror — use keyboard)
-    const titleEditor = page.locator("[data-tag-editor]").first();
+    // Edit the title via TagEditor
+    const titleEditor = page.locator('[contenteditable="true"]').first();
     await titleEditor.click();
     await page.keyboard.press("Control+a");
     await page.keyboard.type(ITEM_NAME);
