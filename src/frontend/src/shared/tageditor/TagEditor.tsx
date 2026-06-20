@@ -99,19 +99,19 @@ function rawTextToDoc(raw: string): Record<string, unknown> {
     if (last < line.length) {
       nodes.push({ type: "text", text: line.slice(last) });
     }
-    // ProseMirror requires every paragraph to have ≥ 1 child.  Empty
-    // lines in a multi-line value produce an empty `nodes` array —
-    // insert a space so the document is valid.
-    if (nodes.length === 0) {
-      nodes.push({ type: "text", text: " " });
-    }
     return nodes;
   };
 
-  const paragraphs = raw.split("\n").map((line) => ({
-    type: "paragraph",
-    content: lineToNodes(line),
-  }));
+  // An empty line yields an empty paragraph, represented as a paragraph
+  // WITHOUT a `content` key (the canonical empty paragraph).  We must NOT
+  // inject a space text node — that would round-trip through docToRawText
+  // and silently persist spurious spaces on autosave.
+  const paragraphs = raw.split("\n").map((line) => {
+    const nodes = lineToNodes(line);
+    return nodes.length > 0
+      ? { type: "paragraph", content: nodes }
+      : { type: "paragraph" };
+  });
   return { type: "doc", content: paragraphs };
 }
 

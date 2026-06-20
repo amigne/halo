@@ -23,11 +23,7 @@ const ITEM_NAME = "Pain complet bio";
 test.describe.configure({ mode: "serial" });
 
 test.describe("Lists (real backend)", () => {
-  // fixme: TagEditor (TipTap) does not mount in the Docker Vite dev
-  // environment — [contenteditable] is never rendered in the item modal.
-  // Works locally.  Root cause TBD (likely TipTap/ProseMirror import in
-  // Docker build).  Marked fixme so it doesn't block CI.
-  test.fixme("full flow: create list, add item, edit, reload persists", async ({
+  test("full flow: create list, add item, edit, reload persists", async ({
     page,
   }) => {
     test.setTimeout(180_000);
