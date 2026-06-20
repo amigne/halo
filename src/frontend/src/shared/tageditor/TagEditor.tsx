@@ -99,11 +99,11 @@ function rawTextToDoc(raw: string): Record<string, unknown> {
     if (last < line.length) {
       nodes.push({ type: "text", text: line.slice(last) });
     }
-    // ProseMirror forbids a paragraph with no children.  When a line
-    // produces zero nodes (empty line with no tags), insert a single
-    // empty text node — the editor normalises this on first interaction.
+    // ProseMirror requires every paragraph to have ≥ 1 child.  Empty
+    // lines in a multi-line value produce an empty `nodes` array —
+    // insert a space so the document is valid.
     if (nodes.length === 0) {
-      nodes.push({ type: "text", text: "" });
+      nodes.push({ type: "text", text: " " });
     }
     return nodes;
   };
