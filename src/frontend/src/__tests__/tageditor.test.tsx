@@ -128,6 +128,37 @@ describe("TagEditor", () => {
     expect(chip!.textContent).toContain("LIST:3");
   });
 
+  it("resolves a rehydrated chip to its title (F-067)", async () => {
+    // Regression guard: a chip loaded from raw text (not inserted via
+    // autocomplete) must still trigger resolution and show its title. The
+    // bug was that tag refs were only extracted in onUpdate (user edits),
+    // never for externally-loaded content, so reloaded chips stayed bare.
+    resolveResults.push({
+      tag_prefix: "LIST",
+      ref_no: 3,
+      title: "Ma liste résolue",
+      uuid: "019ea184-0000-7000-8000-000000000003",
+      exists: true,
+    });
+
+    render(
+      <Wrapper>
+        <TagEditor value="{LIST:3}" onChange={vi.fn()} />
+      </Wrapper>,
+    );
+
+    await waitForEditor();
+
+    await waitFor(
+      () => {
+        const chip = document.querySelector("[data-tag-chip]");
+        expect(chip?.getAttribute("data-title")).toBe("Ma liste résolue");
+      },
+      { timeout: 5_000 },
+    );
+    expect(document.querySelector(".tag-chip--resolved")).toBeTruthy();
+  });
+
   it("rehydrates multiple tags in the same line", async () => {
     const onChange = vi.fn();
     render(

@@ -310,7 +310,12 @@ export function TagEditor({
     return () => el.removeEventListener("click", handleChipClick, true);
   }, [handleChipClick, editor]);
 
-  // ── Sync external value → editor content ───────────────────────────────
+  // ── Sync external value → editor content, then (re)extract tag refs ──────
+  // This is the ONLY place tag refs get extracted on rehydration: setContent
+  // (and the initial `content`) use emitUpdate:false, so `onUpdate` never
+  // fires for externally-loaded content. Without extracting here, a reloaded
+  // value renders chips that never resolve their titles (F-067) — they stay
+  // as bare "PREFIX:ref_no". Resolution is driven by `tagRefs`.
   useEffect(() => {
     if (!editor) return;
     const currentRaw = docToRawText(editor.state.doc);
@@ -320,7 +325,17 @@ export function TagEditor({
         { emitUpdate: false },
       );
     }
-  }, [editor, value]);
+    const refs = extractTagRefs(editor.state.doc);
+    setTagRefs((prev) => {
+      const same =
+        prev.length === refs.length &&
+        prev.every(
+          (r, i) =>
+            r.tag_prefix === refs[i]!.tag_prefix && r.ref_no === refs[i]!.ref_no,
+        );
+      return same ? prev : refs;
+    });
+  }, [editor, value, setTagRefs]);
 
   // NOTE: do NOT manually call `editor.destroy()` here. `useEditor` already
   // owns the editor lifecycle and destroys it on unmount. A manual destroy
