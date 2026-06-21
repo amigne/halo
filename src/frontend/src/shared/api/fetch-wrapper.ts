@@ -52,7 +52,10 @@ export async function apiMutate(
 ): Promise<Response> {
   let csrf = readCsrfCookie();
   if (!csrf) {
-    await fetch(`${BASE_URL}/api/v1/auth/csrf`, { credentials: "same-origin" });
+    await fetch(`${BASE_URL}/api/v1/auth/csrf`, {
+      credentials: "same-origin",
+      signal: options.signal,
+    });
     csrf = readCsrfCookie();
   }
   return fetch(`${BASE_URL}${path}`, {

@@ -136,7 +136,10 @@
     },
     "tagEditor": {
       "label": "Éditeur de balises",
-      "placeholder": "Saisissez du texte…"
+      "placeholder": "Saisissez du texte…",
+      "noResults": "Aucune balise trouvée",
+      "typeLabel": "Type",
+      "brokenTag": "supprimé"
     }
   },
   "modules": {

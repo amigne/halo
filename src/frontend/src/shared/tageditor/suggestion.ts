@@ -1,0 +1,270 @@
+/**
+ * TipTap suggestion extension triggered by ``{`` for tag autocompletion.
+ *
+ * Implements specs/02 §8 (U-080..U-083, U-087) and F-064..F-066:
+ * - ``{`` opens the popup
+ * - 1-char query → types whose prefix matches + objects
+ * - ≥ 2 chars → objects only
+ * - ↑↓ navigate, Enter select, Escape dismiss
+ */
+
+import { Extension } from "@tiptap/core";
+import { PluginKey } from "@tiptap/pm/state";
+import Suggestion, {
+  type SuggestionKeyDownProps,
+} from "@tiptap/suggestion";
+
+import type { SearchResponse } from "./api";
+import { searchRefs } from "./api";
+
+// ── Item types ───────────────────────────────────────────────────────────────
+
+/** A type/prefix suggestion (e.g. ``{LIST``). */
+interface TypeItem {
+  kind: "type";
+  prefix: string;
+}
+
+/** An object/title suggestion (e.g. ``{LIST:3 — Courses}``). */
+interface ObjectItem {
+  kind: "object";
+  tag_prefix: string;
+  ref_no: number;
+  uuid: string;
+  title: string;
+}
+
+type SuggestionItem = TypeItem | ObjectItem;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildItems(data: SearchResponse): SuggestionItem[] {
+  const types: TypeItem[] = data.types.map((t) => ({
+    kind: "type" as const,
+    prefix: t.prefix,
+  }));
+  const objects: ObjectItem[] = data.items.map((i) => ({
+    kind: "object" as const,
+    tag_prefix: i.tag_prefix,
+    ref_no: i.ref_no,
+    uuid: i.uuid,
+    title: i.title,
+  }));
+  return [...types, ...objects];
+}
+
+// ── DOM builders ─────────────────────────────────────────────────────────────
+
+function createPopover(): HTMLElement {
+  const el = document.createElement("div");
+  el.className =
+    "tag-suggestion-popover absolute z-50 w-72 max-h-64 overflow-y-auto " +
+    "rounded-lg border border-border bg-surface shadow-lg " +
+    "p-1";
+  el.setAttribute("role", "listbox");
+  el.setAttribute("aria-label", "Tag autocomplete");
+  return el;
+}
+
+function createItem(
+  item: SuggestionItem,
+  index: number,
+  isSelected: boolean,
+): HTMLElement {
+  const el = document.createElement("div");
+  el.setAttribute("role", "option");
+  el.setAttribute("aria-selected", String(isSelected));
+  el.setAttribute("data-index", String(index));
+
+  const base =
+    "flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer " +
+    "[@media(pointer:coarse)]:min-h-11";
+  const selected = isSelected ? " bg-primary/15 text-primary" : " text-text";
+  const hover = " hover:bg-surface-alt";
+  el.className = base + selected + hover;
+
+  // Badge (Type or {PREFIX:ref_no})
+  const badge = document.createElement("span");
+  badge.className =
+    "shrink-0 text-xs font-mono text-text-muted bg-surface-alt " +
+    "px-1 py-0.5 rounded";
+
+  if (item.kind === "type") {
+    badge.textContent = "Type";
+    el.appendChild(badge);
+
+    const prefixSpan = document.createElement("span");
+    prefixSpan.className = "font-mono font-medium";
+    prefixSpan.textContent = "{";
+    const highlight = document.createElement("span");
+    highlight.className = "text-primary";
+    highlight.textContent = item.prefix;
+    prefixSpan.appendChild(highlight);
+    el.appendChild(prefixSpan);
+  } else {
+    badge.textContent = `{${item.tag_prefix}:${item.ref_no}`;
+    el.appendChild(badge);
+
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "truncate";
+    titleSpan.textContent = item.title;
+    el.appendChild(titleSpan);
+  }
+
+  return el;
+}
+
+// ── Extension ────────────────────────────────────────────────────────────────
+
+export const TagSuggestion = Extension.create({
+  name: "tagSuggestion",
+
+  addProseMirrorPlugins() {
+    return [
+      Suggestion<SuggestionItem, SuggestionItem>({
+        editor: this.editor,
+        char: "{",
+        pluginKey: new PluginKey("tagSuggestionPlugin"),
+        debounce: 150,
+
+        allow({ editor }) {
+          // Only trigger in TagEditor instances.
+          return editor.view.dom.closest("[data-tag-editor]") !== null;
+        },
+
+        async items({ query, signal }) {
+          try {
+            const data = await searchRefs(query, signal);
+            return buildItems(data);
+          } catch {
+            return [];
+          }
+        },
+
+        command({ editor, range, props }) {
+          if (props.kind === "type") {
+            editor
+              .chain()
+              .focus()
+              .deleteRange(range)
+              .insertContent(`{${props.prefix}:`)
+              .run();
+          } else {
+            // Insert a tagChip node, not plain text — the node renders
+            // as a chip and is later resolved by syncChipTitles.
+            editor
+              .chain()
+              .focus()
+              .deleteRange(range)
+              .insertContent({
+                type: "tagChip",
+                attrs: {
+                  tag_prefix: props.tag_prefix,
+                  ref_no: props.ref_no,
+                  title: props.title, // known from autocomplete hit
+                  uuid: props.uuid,
+                  broken: false,
+                },
+              })
+              .run();
+          }
+        },
+
+        render() {
+          let popover: HTMLElement | null = null;
+          let currentItems: SuggestionItem[] = [];
+          let selectedIndex = 0;
+          let unmount: (() => void) | null = null;
+          let capturedCommand: ((item: SuggestionItem) => void) | null = null;
+
+          function renderList() {
+            if (!popover) return;
+            popover.innerHTML = "";
+
+            if (currentItems.length === 0) {
+              const empty = document.createElement("div");
+              empty.className =
+                "px-2 py-3 text-sm text-text-muted text-center";
+              empty.textContent = "No matching tags";
+              popover.appendChild(empty);
+              return;
+            }
+
+            currentItems.forEach((item, idx) => {
+              const el = createItem(item, idx, idx === selectedIndex);
+              el.addEventListener("click", () => {
+                capturedCommand?.(item);
+              });
+              el.addEventListener("mouseenter", () => {
+                selectedIndex = idx;
+                renderList();
+              });
+              popover!.appendChild(el);
+            });
+          }
+
+          return {
+            onStart(props) {
+              currentItems = props.items;
+              capturedCommand = props.command;
+              selectedIndex = 0;
+              popover = createPopover();
+              renderList();
+              unmount = props.mount(popover);
+            },
+
+            onUpdate(props) {
+              currentItems = props.items;
+              capturedCommand = props.command;
+              if (selectedIndex >= props.items.length) {
+                selectedIndex = Math.max(0, props.items.length - 1);
+              }
+              renderList();
+            },
+
+            onExit() {
+              if (unmount) {
+                unmount();
+                unmount = null;
+              }
+              popover = null;
+              currentItems = [];
+              capturedCommand = null;
+              selectedIndex = 0;
+            },
+
+            onKeyDown(props: SuggestionKeyDownProps): boolean {
+              if (props.event.key === "ArrowDown") {
+                props.event.preventDefault();
+                selectedIndex = Math.min(
+                  selectedIndex + 1,
+                  currentItems.length - 1,
+                );
+                renderList();
+                return true;
+              }
+
+              if (props.event.key === "ArrowUp") {
+                props.event.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                renderList();
+                return true;
+              }
+
+              if (props.event.key === "Enter") {
+                props.event.preventDefault();
+                const item = currentItems[selectedIndex];
+                if (item && capturedCommand) {
+                  capturedCommand(item);
+                }
+                return true;
+              }
+
+              return false;
+            },
+          };
+        },
+      }),
+    ];
+  },
+});

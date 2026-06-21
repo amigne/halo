@@ -136,7 +136,10 @@
     },
     "tagEditor": {
       "label": "Tag editor",
-      "placeholder": "Type text…"
+      "placeholder": "Type text…",
+      "noResults": "No matching tags",
+      "typeLabel": "Type",
+      "brokenTag": "deleted"
     }
   },
   "modules": {

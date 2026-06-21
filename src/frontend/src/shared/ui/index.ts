@@ -20,5 +20,5 @@ export type { IconPickerProps } from "./IconPicker";
 export { Modal } from "./Modal";
 export { Skeleton, SkeletonCard, SkeletonCircle, SkeletonLine } from "./Skeleton";
 export { Spinner } from "./Spinner";
-export { TagEditor } from "./TagEditor";
-export type { TagEditorProps } from "./TagEditor";
+export { TagEditor } from "../tageditor";
+export type { TagEditorProps } from "../tageditor";

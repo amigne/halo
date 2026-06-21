@@ -142,6 +142,15 @@ async def http_client(
     db_mod.engine = test_engine
     db_mod.async_session = test_session
 
+    # Ensure every registered module has a row in the ``modules`` table
+    # so ``is_enabled`` returns True during tests (matches production
+    # behaviour where modules are enabled by default).
+    from halo_api.modules.registry import sync_registry
+
+    async with test_session() as _sync_sess:
+        await sync_registry(_sync_sess)
+        await _sync_sess.commit()
+
     # Disable Secure cookie flag in tests (ASGITransport uses http://test).
     monkeypatch.setattr(app_settings, "session_secure_cookie", False)
 
@@ -196,10 +205,19 @@ async def http_client_rl(
     _orig_engine = db_mod.engine
     _orig_session = db_mod.async_session
     test_engine = create_async_engine(db_url, echo=False)
-    db_mod.engine = test_engine
-    db_mod.async_session = async_sessionmaker(
+    test_session_rl = async_sessionmaker(
         test_engine, class_=SASession, expire_on_commit=False
     )
+    db_mod.engine = test_engine
+    db_mod.async_session = test_session_rl
+
+    # Ensure every registered module has a DB row (see http_client fixture).
+    from halo_api.modules.registry import sync_registry as _sync_rl
+
+    async with test_session_rl() as _s:
+        await _sync_rl(_s)
+        await _s.commit()
+
     monkeypatch.setattr(app_settings, "session_secure_cookie", False)
 
     transport = ASGITransport(app=app)
