@@ -80,6 +80,10 @@ export function EditListModal({ onClose: _onClose, modalKey }: EditListModalProp
     try {
       await deleteList(listId);
       queryClient.invalidateQueries({ queryKey: ["lists"] });
+      // Deleting a referenceable object must let cross-module tag chips that
+      // point to it re-resolve as broken (F-071/U-085). Without this, the
+      // cached resolve result (staleTime) keeps chips showing as resolved.
+      queryClient.invalidateQueries({ queryKey: ["refs", "resolve"] });
       addToast("success", t("lists.editModal.deleted"));
       // Close all modals for this list — navigate back to base URL
       const currentSearch = (router.latestLocation.search ?? {}) as Record<string, unknown>;
