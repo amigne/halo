@@ -8,7 +8,15 @@ lower-casing instead of citext (T-142).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Uuid, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Uuid,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from halo_api.core.db import Base, UUIDPKMixin
@@ -96,6 +104,20 @@ class UserNotificationPref(UUIDPKMixin, Base):
     """
 
     __tablename__ = "user_notification_prefs"
+    __table_args__ = (
+        # One row per (user, module, event, channel) — makes the lazy upsert
+        # in users.py race-safe (no duplicate preference rows). A unique index
+        # (rather than a named constraint) keeps the migration portable across
+        # SQLite and Postgres without a table rebuild.
+        Index(
+            "uq_user_notification_prefs_umec",
+            "user_id",
+            "module_key",
+            "event_type",
+            "channel",
+            unique=True,
+        ),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         Uuid(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
