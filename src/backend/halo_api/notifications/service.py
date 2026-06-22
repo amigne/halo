@@ -15,6 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from halo_api.accounts.models import UserNotificationPref
 from halo_api.notifications.models import Notification
 
+#: All delivery channels. Every channel is enabled by default (opt-out); a
+#: channel is excluded only when a preference row explicitly disables it.
+ALL_CHANNELS: frozenset[str] = frozenset({"in_app", "email"})
+
 
 async def channels_for(
     db: AsyncSession,
@@ -24,26 +28,30 @@ async def channels_for(
 ) -> set[str]:
     """Return the set of enabled channel names for a given notification event.
 
-    Queries ``user_notification_prefs`` for rows matching *user_id*,
-    *module_key*, *event_type*, and ``enabled=True``.
+    **Opt-out model**: every channel is ON by default; a channel is only
+    excluded when an explicit preference row sets ``enabled=False``.
 
-    **Default**: when no preference rows exist for the combination, the
-    function conservatively returns ``{"in_app", "email"}`` — notification
-    delivery is opt-out, not opt-in.  This ensures users receive
-    notifications until they explicitly disable a channel.
+    Preference rows are created lazily (one per toggled channel), so we must
+    distinguish "no preference at all" from "this channel was disabled".
+    Collecting only ``enabled=True`` rows and defaulting when the set is empty
+    is wrong: disabling a single channel leaves zero enabled rows and would
+    then re-enable *every* channel via the default. Instead we start from all
+    known channels and remove the ones explicitly disabled — so disabling a
+    channel removes it from routing (and disabling all yields an empty set).
     """
     result = await db.execute(
-        select(UserNotificationPref.channel).where(
+        select(
+            UserNotificationPref.channel,
+            UserNotificationPref.enabled,
+        ).where(
             UserNotificationPref.user_id == user_id,
             UserNotificationPref.module_key == module_key,
             UserNotificationPref.event_type == event_type,
-            UserNotificationPref.enabled.is_(True),
         )
     )
-    channels = {row[0] for row in result.all()}
-    if not channels:
-        return {"in_app", "email"}
-    return channels
+    prefs = {channel: enabled for channel, enabled in result.all()}
+    # Channels with no row default to ON (opt-out); explicit False removes them.
+    return {channel for channel in ALL_CHANNELS if prefs.get(channel, True)}
 
 
 async def create_notification(

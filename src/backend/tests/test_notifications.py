@@ -170,6 +170,71 @@ async def test_channels_for_default_when_no_prefs(db_url: str) -> None:
     cleanup_db_file(db_url)
 
 
+@pytest.mark.asyncio
+async def test_channels_for_single_disable_with_no_other_row(db_url: str) -> None:
+    """Disabling one channel removes it even when no other pref row exists.
+
+    Regression guard: prefs are upserted lazily, so disabling email creates a
+    single (email, enabled=False) row. The result must be {"in_app"} — NOT the
+    {"in_app", "email"} default. (The old logic collected enabled rows and
+    fell back to the default when empty, re-enabling the disabled channel.)
+    """
+    _prepare_db(db_url)
+    engine = create_async_engine(db_url, echo=False)
+    sf = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    user = _make_user("singledisable@test.local")
+    async with sf() as s, s.begin():
+        s.add(user)
+        await s.flush()
+        s.add(
+            UserNotificationPref(
+                user_id=user.id,
+                module_key="lists",
+                event_type="list_item_due",
+                channel="email",
+                enabled=False,
+            )
+        )
+
+    async with sf() as s:
+        result = await channels_for(s, user.id, "lists", "list_item_due")
+        assert result == {"in_app"}
+
+    await engine.dispose()
+    cleanup_db_file(db_url)
+
+
+@pytest.mark.asyncio
+async def test_channels_for_all_disabled_yields_empty(db_url: str) -> None:
+    """Disabling every channel mutes the event entirely (empty set)."""
+    _prepare_db(db_url)
+    engine = create_async_engine(db_url, echo=False)
+    sf = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+    user = _make_user("allmuted@test.local")
+    async with sf() as s, s.begin():
+        s.add(user)
+        await s.flush()
+        for ch in ("in_app", "email"):
+            s.add(
+                UserNotificationPref(
+                    user_id=user.id,
+                    module_key="lists",
+                    event_type="list_item_due",
+                    channel=ch,
+                    enabled=False,
+                )
+            )
+
+    async with sf() as s:
+        result = await channels_for(s, user.id, "lists", "list_item_due")
+        assert result == set()
+
+    await engine.dispose()
+    cleanup_db_file(db_url)
+
+
 # ── create / list ────────────────────────────────────────────────────────────
 
 
